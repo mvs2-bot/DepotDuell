@@ -276,9 +276,12 @@ tr.sub td:first-child{padding-left:14px}
       <details class="group" open>
         <summary><span class="t">Du und dein Beitrag</span><span class="s" id="sum1"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
         <div class="fields">
-          <div class="field"><div class="row"><label for="age">Alter beim Start 2027</label><button type="button" class="info" aria-label="Hinweis zum Alter"></button><output id="age_o"></output></div>
+          <div class="field"><div class="row"><label for="age">Alter am 1.1.2027</label><button type="button" class="info" aria-label="Hinweis zum Alter"></button><output id="age_o"></output></div>
             <input type="range" id="age" min="18" max="60" step="1" value="32">
             <div class="hint">Unter 25 gibt es einmalig <b>200 € Berufseinsteigerbonus</b>. Je früher du startest, desto mehr Jahre Zinseszins.</div></div>
+          <div class="field"><div class="row"><label for="start">Startjahr</label><button type="button" class="info" aria-label="Hinweis zum Startjahr"></button><output id="start_o"></output></div>
+            <input type="range" id="start" min="2027" max="2050" step="1" value="2027">
+            <div class="hint">Frühester Start ist der <b>1.1.2027</b>. Wer später anfängt, hat bis zum Rentenbeginn weniger Sparjahre: <span id="spanInfo"></span></div></div>
           <div class="field"><div class="row"><label for="ret">Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Rentenbeginn"></button><output id="ret_o"></output></div>
             <input type="range" id="ret" min="65" max="70" step="1" value="67">
             <div class="hint">Die Auszahlung beginnt <b>frühestens mit 65, spätestens mit 70</b>.</div></div>
@@ -318,6 +321,11 @@ tr.sub td:first-child{padding-left:14px}
           <div class="field"><div class="row"><label for="cRie">Riester: Kosten</label><button type="button" class="info" aria-label="Hinweis zu Riester-Kosten"></button><output id="cRie_o"></output></div>
             <input type="range" id="cRie" min="0.3" max="3" step="0.1" value="1.5">
             <div class="hint">Riester-Rentenversicherungen lagen laut Verbraucherzentrale im Mittel bei rund <b>1,5 bis 1,7 %</b> Effektivkosten, teure bei 2,5 bis 3 %. Fondssparpläne ab etwa 0,7 %.</div></div>
+          <div class="field"><div class="row"><label for="infl">Inflation</label><button type="button" class="info" aria-label="Hinweis zur Inflation"></button><output id="infl_o"></output></div>
+            <input type="range" id="infl" min="0" max="5" step="0.1" value="2">
+            <div class="hint">Ziel der EZB sind <b>2 %</b>, der Schnitt in Deutschland seit 1991 lag bei gut 2 %. Die Zulagen (540 €), die Förderobergrenze (1.800 €) und der Sparerpauschbetrag sind feste Beträge und verlieren über die Jahre an Wert. Die Rendite oben ist nominal, also vor Inflation.</div></div>
+          <label class="check"><input type="checkbox" id="real"><span>Ergebnisse in heutiger Kaufkraft zeigen (Euro von 2027).</span></label>
+          <label class="check"><input type="checkbox" id="dyn"><span>Beitrag jährlich mit der Inflation erhöhen. Dann sinkt der geförderte Anteil, weil Zulagen und Grenze fest bleiben.</span></label>
         </div>
       </details>
 
@@ -373,7 +381,7 @@ tr.sub td:first-child{padding-left:14px}
           </div>
         </section>
         <section class="panel ledger" aria-live="polite">
-          <h2>Netto mit Rentenbeginn</h2>
+          <h2 id="netH">Netto mit Rentenbeginn</h2>
           <div id="ledger" style="display:flex;flex-direction:column;gap:16px"></div>
           <div class="key"><span><i class="own"></i>Eigene Einzahlungen</span><span><i class="fund"></i>Zulagen und Erstattung</span><span><i class="gain"></i>Ertrag nach Steuern</span><span><i class="tax"></i>Steuern und Rückforderung</span></div>
         </section>
@@ -435,11 +443,11 @@ tr.sub td:first-child{padding-left:14px}
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  const ids = ["age","ret","mon","kids","kidyrs","r","cAvd","cEtf","rRie","cRie","tNow","tOld","abYrs","abFrom","abTax"];
+  const ids = ["age","ret","mon","kids","kidyrs","r","cAvd","cEtf","rRie","cRie","tNow","tOld","abYrs","abFrom","abTax","start","infl"];
   const eur = v => Math.round(v).toLocaleString("de-DE") + " €";
   const kEur = v => (Math.abs(v)>=100000 ? Math.round(v/1000).toLocaleString("de-DE") : (v/1000).toLocaleString("de-DE",{maximumFractionDigits:1})) + " Tsd. €";
   const pct = v => v.toLocaleString("de-DE",{maximumFractionDigits:2}) + " %";
-  const fmt = {age:v=>v+" Jahre",ret:v=>v+" Jahre",mon:v=>eur(v),kids:v=>String(v),kidyrs:v=>v+" Jahre",r:pct,cAvd:pct,cEtf:pct,rRie:pct,cRie:pct,tNow:v=>v+" %",tOld:v=>v+" %",abYrs:v=>v+" Jahre",abFrom:v=>v+" Jahre",abTax:v=>pct(v)+" p. a."};
+  const fmt = {age:v=>v+" Jahre",ret:v=>v+" Jahre",mon:v=>eur(v),kids:v=>String(v),kidyrs:v=>v+" Jahre",r:pct,cAvd:pct,cEtf:pct,rRie:pct,cRie:pct,tNow:v=>v+" %",tOld:v=>v+" %",abYrs:v=>v+" Jahre",abFrom:v=>v+" Jahre",abTax:v=>pct(v)+" p. a.",start:v=>String(v),infl:v=>pct(v)+" p. a."};
   const INFO = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 8v4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="5.6" r="1" fill="currentColor"/></svg>';
   const ICON_OK = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.8 9.2l2.2 2.2 4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const ICON_BAD = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2.2l7.2 12.6H1.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7v3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="12.8" r="1" fill="currentColor"/></svg>';
@@ -451,17 +459,21 @@ tr.sub td:first-child{padding-left:14px}
 
   function simulate(p, tOldOverride){
     const tOld = (tOldOverride ?? p.tOld)/100, tNow = p.tNow/100;
-    const N = Math.max(1, p.ret - p.age);
+    const off = p.start - 2027, a0 = p.age + off;       // später Start: weniger Sparjahre
+    const N = Math.max(1, p.ret - a0);
+    const inf = 1 + p.infl/100;
+    const kk = y => p.real ? Math.pow(inf, -(off + y)) : 1; // Kaufkraft-Faktor (Euro von 2027)
     const gA = 1 + (p.r - p.cAvd)/100, gE = 1 + (p.r - p.cEtf)/100, gR = 1 + (p.rRie - p.cRie)/100;
     let S=0,U=0,Ub=0, side=0, sideB=0, cashRefund=0;
     let V=0, Vb=0;
     let R=0, Ru=0, Rub=0, Rguar=0, rside=0, rsideB=0;
-    const a = {own:0,zul:0,tax:0}, ri = {own:0,zul:0,tax:0};
+    let abN = 0; const a = {own:0,zul:0,tax:0}, ri = {own:0,zul:0,tax:0}, aR = {own:0,zul:0,tax:0}, riR = {own:0,zul:0,tax:0};
     const series = [];
     for(let y=0;y<N;y++){
-      const age = p.age + y;
+      const age = a0 + y;
       const abroad = p.abYrs>0 && age>=p.abFrom && age < p.abFrom + p.abYrs;
-      const own = Math.min(p.mon*12, 6840);
+      const own = Math.min(p.mon*12*(p.dyn ? Math.pow(inf, off + y) : 1), 6840);
+      if(abroad) abN++;
       const pause = abroad && p.abMode === "pause";   // Beiträge ruhen, Geld fließt stattdessen in einen freien ETF
       const ownV = pause ? 0 : own;                    // was in Depot bzw. Riester eingezahlt wird
       const drag = abroad ? 1 - p.abTax/100 : 1;       // laufende Steuer im Ausland auf Fondserträge
@@ -472,7 +484,7 @@ tr.sub td:first-child{padding-left:14px}
         sub = Math.min(own,1800);
         const grund = 0.5*Math.min(sub,360) + 0.25*Math.max(0,sub-360);
         const kind = kidsActive*Math.min(own,300);
-        const bonus = (y===0 && p.age<25) ? 200 : 0;
+        const bonus = (y===0 && a0<25) ? 200 : 0;
         zul = grund+kind+bonus;
         tb = Math.max(0,(sub+grund+kind)*tNow - (grund+kind));
       }
@@ -480,13 +492,13 @@ tr.sub td:first-child{padding-left:14px}
       S = (S + sub + zul)*gA*drag; U = (U + unsub)*gA*drag; Ub += unsub;
       const toSide = (p.reinv ? tb : 0) + (pause ? own : 0);
       side = (side + toSide)*gE*drag; sideB += toSide; if(!p.reinv) cashRefund += tb;
-      a.own += own; a.zul += zul; a.tax += tb;
+      a.own += own; a.zul += zul; a.tax += tb; const k = kk(y); aR.own += own*k; aR.zul += zul*k; aR.tax += tb*k;
       // ETF
       V = (V + own)*gE*drag; Vb += own;
       // Riester
       let rz=0, rtb=0, rsub=0;
       if(!abroad){
-        rz = 175 + kidsActive*300 + ((y===0 && p.age<25)?200:0);
+        rz = 175 + kidsActive*300 + ((y===0 && a0<25)?200:0);
         rsub = Math.max(0, Math.min(own, 2100 - rz));
         rtb = Math.max(0,(rsub+rz)*tNow - rz);
       }
@@ -495,11 +507,12 @@ tr.sub td:first-child{padding-left:14px}
       Ru = (Ru + runsub)*gR; Rub += runsub;
       const rToSide = (p.reinv ? rtb : 0) + (pause ? own : 0);
       rside = (rside + rToSide)*gE*drag; rsideB += rToSide;
-      ri.own += own; ri.zul += rz; ri.tax += rtb;
-      series.push({age:age+1, avd:S+U+side, etf:V, rie:Math.max(R,0)+Ru+rside});
+      ri.own += own; ri.zul += rz; ri.tax += rtb; riR.own += own*k; riR.zul += rz*k; riR.tax += rtb*k;
+      const ke = kk(y+1); series.push({age:age+1, avd:(S+U+side+cashRefund)*ke, etf:V*ke, rie:(Math.max(R,0)+Ru+rside)*ke});
     }
     R = Math.max(R, Rguar);
-    if(series.length) series[series.length-1].rie = R + Ru + rside;
+    const F = kk(N);
+    if(series.length) series[series.length-1].rie = (R + Ru + rside)*F;
     const third = p.home === "third";
     const half = (N >= 12 && p.ret >= 62) ? 0.5 : 1;   // ungeförderte Beiträge: halber Ertrag steuerpflichtig (§ 22 Nr. 5 S. 2 c i. V. m. § 20 Abs. 1 Nr. 6 S. 2 EStG)
     // Netto AVD
@@ -510,9 +523,11 @@ tr.sub td:first-child{padding-left:14px}
     let rieNet = R*(1-tOld) + Ru - half*Math.max(0,Ru-Rub)*tOld + etfNet(rside,rsideB) + (p.reinv ? 0 : ri.tax);
     let rieBack = third ? ri.zul + ri.tax : 0;
     rieNet -= rieBack;
-    return {N, series, a, ri, avdGross:S+U, side, sideB, rside, rsideB, cashRefund, avdNet, avdBack, etfGross:V, etf, etfTax:V-etf, rieGross:R+Ru, rieNet, rieBack,
-            half, avdTaxF: S*tOld, avdTaxU: half*Math.max(0,U-Ub)*tOld, rieTaxF: R*tOld, rieTaxU: half*Math.max(0,Ru-Rub)*tOld,
-            avdTax: S*tOld + half*Math.max(0,U-Ub)*tOld, rieTax: R*tOld + half*Math.max(0,Ru-Rub)*tOld};
+    // Alle Beträge mit Rentenbeginn auf Wunsch in Kaufkraft von 2027 (F); Einzahlungen jahresgenau abgezinst (aR, riR)
+    return {N, a0, abN, end: p.start + N, series, a: aR, ri: riR, F, avdGross:(S+U)*F, side:side*F, sideTax:(side - etfNet(side,sideB))*F,
+            rside:rside*F, rsideTax:(rside - etfNet(rside,rsideB))*F, cashRefund:cashRefund*F, rieCash:(p.reinv ? 0 : ri.tax)*F,
+            avdNet:avdNet*F, avdBack:avdBack*F, etfGross:V*F, etf:etf*F, etfTax:(V-etf)*F, rieGross:(R+Ru)*F, rieNet:rieNet*F, rieBack:rieBack*F,
+            half, avdTaxF: S*tOld*F, avdTaxU: half*Math.max(0,U-Ub)*tOld*F, rieTaxF: R*tOld*F, rieTaxU: half*Math.max(0,Ru-Rub)*tOld*F};
   }
 
 
@@ -525,7 +540,7 @@ tr.sub td:first-child{padding-left:14px}
       {t:"Wohnsitz außerhalb von EU/EWR bei Rentenbeginn", d:"Zum Beispiel Schweiz, UK oder USA: Zulagen und Steuervorteile werden zurückgefordert (§ 95 EStG).",
         c: p.home==="third" ? "hit" : "ok", l: p.home==="third" ? "trifft zu" : "bei dir nein"},
       {t:"Viele Jahre ohne Förderung", d:"Ohne Zulagen bleibt beim Depot nur die Steuerstundung, und die Kosten sind meist etwas höher als beim ETF.",
-        c: p.abYrs>=15 ? "hit" : "", l: p.abYrs ? p.abYrs+" Jahre eingestellt" : "keine eingestellt"},
+        c: s.abN>=15 ? "hit" : "", l: s.abN ? s.abN+" Jahre eingestellt" : "keine eingestellt"},
       {t:"Geld vor 65 gebraucht", d:"Für Haus, Auszeit oder Notfall: eine vorzeitige Entnahme ist schädliche Verwendung, die Förderung geht zurück. Den ETF kannst du jederzeit verkaufen.", c:"", l:"selbst prüfen"},
       {t:"Tod vor der Auszahlung", d:"Ohne Übertrag auf den Ehepartner geht die Förderung zurück. Einen ETF erben die Erben vollständig.", c:"", l:"selbst prüfen"},
       {t:"Freiwillig gesetzlich oder privat krankenversichert", d:"Auf die Auszahlungen können Kranken- und Pflegebeiträge anfallen. Im Rechner nicht berücksichtigt.", c:"", l:"selbst prüfen"},
@@ -549,12 +564,13 @@ tr.sub td:first-child{padding-left:14px}
       const el = $(k); p[k] = parseFloat(el.value); $(k+"_o").textContent = fmt[k](p[k]);
       el.style.setProperty("--p", ((el.value-el.min)/(el.max-el.min)*100) + "%");
     });
-    p.reinv = $("reinv").checked; p.home = $("home").value; p.abMode = $("abMode").value; p.idx = $("idx").value in IDX ? $("idx").value : "msci";
+    p.reinv = $("reinv").checked; p.home = $("home").value; p.abMode = $("abMode").value; p.real = $("real").checked; p.dyn = $("dyn").checked; p.idx = $("idx").value in IDX ? $("idx").value : "msci";
     document.querySelectorAll(".idxname").forEach(e => e.textContent = IDX[p.idx].short);
     document.querySelectorAll(".idxplan").forEach(e => e.textContent = IDX[p.idx].plan);
-    if(p.ret <= p.age) p.ret = p.age + 1;
-    $("sum1").textContent = `${p.age} J., ${eur(p.mon)} im Monat`;
-    $("sum2").textContent = `${IDX[p.idx].short}, ${pct(p.r)}`;
+    const a0 = p.age + p.start - 2027, yrs = Math.max(1, p.ret - a0);
+    $("spanInfo").textContent = `Start mit ${a0} Jahren, ${yrs} Sparjahre bis Ende ${p.start + yrs - 1}, Auszahlung ab ${p.start + yrs}.`;
+    $("sum1").textContent = `${p.age} J.${p.start>2027?", ab "+p.start:""}, ${eur(p.mon)} im Monat`;
+    $("sum2").textContent = `${IDX[p.idx].short}, ${pct(p.r)}, Inflation ${pct(p.infl)}`;
     $("sum3").textContent = `${p.tNow} % heute, ${p.tOld} % im Alter`;
     $("sum4").textContent = p.abYrs ? `${p.abYrs} J.${p.abMode==="pause"?", pausiert":""}${p.home==="third"?", Drittstaat":""}` : (p.home==="third" ? "Drittstaat" : "keins");
     return p;
@@ -611,7 +627,7 @@ tr.sub td:first-child{padding-left:14px}
     P = read(); const s = S = simulate(P);
     const best = Math.max(s.avdNet, s.etf, s.rieNet);
     const avdGross = s.avdGross + s.side + s.cashRefund;
-    const rieGross = s.rieGross + s.rside + (P.reinv ? 0 : s.ri.tax);
+    const rieGross = s.rieGross + s.rside + s.rieCash;
     const avdFund = s.avdBack ? 0 : s.a.zul + s.a.tax, rieFund = s.rieBack ? 0 : s.ri.zul + s.ri.tax;
     const maxG = Math.max(avdGross, s.etfGross, rieGross, 1);
     $("ledger").innerHTML =
@@ -621,17 +637,18 @@ tr.sub td:first-child{padding-left:14px}
     $("mini").innerHTML = [["Depot","--avd",s.avdNet],["ETF","--etf",s.etf],["Riester","--rie",s.rieNet]]
       .map(([n,c,v]) => `<div style="--c:var(${c})"><span>${n}</span><b>${kEur(v)}</b></div>`).join("");
     const be = breakEven(P);
-    let v = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen. `;
+    let v = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen${P.real ? " (alle Beträge in Kaufkraft von 2027)" : ""}. `;
     if(P.home==="third") v += `<b>Mit Wohnsitz im Drittstaat werden beim Altersvorsorgedepot ${eur(s.avdBack)} zurückgefordert.</b> `;
     if(be===null) v += `Das Altersvorsorgedepot liegt bei jedem realistischen Steuersatz im Alter vorn.`;
     else if(be===0) v += `Mit diesen Werten ist der freie ETF-Sparplan schon bei 0 % Steuer im Alter besser.`;
     else v += `Das Altersvorsorgedepot schlägt den freien Sparplan, solange dein Steuersatz auf die Auszahlungen unter <b>${be.toLocaleString("de-DE",{maximumFractionDigits:1})} %</b> liegt (eingestellt: ${P.tOld} %).`;
     $("verdict").innerHTML = v;
+    $("netH").textContent = "Netto mit Rentenbeginn " + s.end + (P.real ? ", in Kaufkraft von 2027" : "");
     $("cons").innerHTML = consList(P, s, be).map(c => `<li><b>${c.t}</b><em class="${c.c}">${c.l}</em><span class="t">${c.d}</span></li>`).join("");
     drawChart(s.series);
     const row = (label, a, e, r, cls="") => `<tr class="${cls}"><td>${label}</td><td class="num">${a}</td><td class="num">${e}</td><td class="num">${r}</td></tr>`;
     const neg = x => x>0.5 ? "−"+eur(x) : "–";
-    const sideTax = s.side - etfNet(s.side, s.sideB), rsideTax = s.rside - etfNet(s.rside, s.rsideB);
+    const sideTax = s.sideTax, rsideTax = s.rsideTax;
     $("tbody").innerHTML =
       row("Eigene Einzahlungen", eur(s.a.own), eur(s.a.own), eur(s.ri.own)) +
       row("Zulagen", eur(s.a.zul), "–", eur(s.ri.zul)) +
@@ -643,9 +660,9 @@ tr.sub td:first-child{padding-left:14px}
       row("Rückforderung", neg(s.avdBack), "–", neg(s.rieBack)) +
       row("Netto", eur(s.avdNet), eur(s.etf), eur(s.rieNet), "total");
     const st = $("abStatus");
-    const fehl = Math.min(P.abYrs, Math.max(0, P.ret - P.abFrom));
+    const fehl = s.abN;
     if(P.home==="third"){ st.className="status bad"; st.innerHTML = ICON_BAD + `<span><b>Rückforderung:</b> Mit Wohnsitz außerhalb von EU/EWR bei Rentenbeginn gehen beim Altersvorsorgedepot ${eur(s.avdBack)} an Zulagen und Steuervorteilen zurück. Ausgezahlt wird das Depot trotzdem.</span>`; }
-    else if(P.abYrs>0){ st.className="status ok"; st.innerHTML = ICON_OK + `<span><b>Keine Rückforderung</b>, weil du bei Rentenbeginn in Deutschland oder der EU/EWR wohnst. In ${fehl} Jahren ohne Förderberechtigung fehlen aber die Zulagen; ${P.abMode==="pause" ? "die Beiträge ruhen und fließen in einen freien ETF." : "die Einzahlungen laufen ungefördert weiter."}${P.abTax ? " Laufende Auslandssteuer: " + pct(P.abTax) + " pro Jahr." : ""}</span>`; }
+    else if(s.abN>0){ st.className="status ok"; st.innerHTML = ICON_OK + `<span><b>Keine Rückforderung</b>, weil du bei Rentenbeginn in Deutschland oder der EU/EWR wohnst. In ${fehl} Jahren ohne Förderberechtigung fehlen aber die Zulagen; ${P.abMode==="pause" ? "die Beiträge ruhen und fließen in einen freien ETF." : "die Einzahlungen laufen ungefördert weiter."}${P.abTax ? " Laufende Auslandssteuer: " + pct(P.abTax) + " pro Jahr." : ""}</span>`; }
     else { st.className="status ok"; st.innerHTML = ICON_OK + `<span><b>Keine Auslandsjahre eingestellt.</b> Unter „Eingaben“ im Bereich „Ausland“ kannst du ausprobieren, was ein Umzug kostet.</span>`; }
   }
 
@@ -705,8 +722,8 @@ tr.sub td:first-child{padding-left:14px}
     ctx.fillStyle = COL.line; ctx.fillRect(M, y, CW, 1); y += 46;
 
     // Ergebnis: drei Zeilen mit Balken
-    txt("Netto mit Rentenbeginn (" + p.ret + " Jahre)", M, y, 22, 700, COL.ink); y += 18;
-    const avdGross = s.avdGross + s.side + s.cashRefund, rieGross = s.rieGross + s.rside + (p.reinv ? 0 : s.ri.tax);
+    txt("Netto mit Rentenbeginn (" + p.ret + " Jahre, " + s.end + ")" + (p.real ? " in Kaufkraft von 2027" : ""), M, y, 22, 700, COL.ink); y += 18;
+    const avdGross = s.avdGross + s.side + s.cashRefund, rieGross = s.rieGross + s.rside + s.rieCash;
     const rows = [
       ["Altersvorsorgedepot", COL.avd, s.avdNet, parts(s.a.own, s.avdBack?0:s.a.zul+s.a.tax, s.avdNet, avdGross), avdGross],
       [IDX[p.idx].plan, COL.etf, s.etf, parts(s.a.own, 0, s.etf, s.etfGross), s.etfGross],
@@ -743,7 +760,7 @@ tr.sub td:first-child{padding-left:14px}
 
     // Fazit
     const be = breakEven(p);
-    let fazit = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen. `;
+    let fazit = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen${p.real ? " (alle Beträge in Kaufkraft von 2027)" : ""}. `;
     if(p.home==="third") fazit += `Mit Wohnsitz im Drittstaat werden beim Altersvorsorgedepot ${eur(s.avdBack)} zurückgefordert. `;
     if(be===null) fazit += "Das Altersvorsorgedepot liegt bei jedem realistischen Steuersatz im Alter vorn.";
     else if(be===0) fazit += "Mit diesen Werten ist der freie ETF-Sparplan schon bei 0 % Steuer im Alter besser.";
@@ -758,11 +775,11 @@ tr.sub td:first-child{padding-left:14px}
     const colW = (CW-48)/2, x1 = M, x2 = M + colW + 48; const y0 = y;
     txt("Annahmen", x1, y, 20, 700, COL.ink);
     const ann = [
-      ["Alter beim Start 2027", p.age+" Jahre"], ["Rentenbeginn", p.ret+" Jahre"], ["Eigener Beitrag", eur(p.mon)+" im Monat"],
+      ["Alter am 1.1.2027", p.age+" Jahre"], ["Start", s.a0===p.age ? "1.1.2027" : "1.1."+p.start+" (mit "+s.a0+" Jahren)"], ["Rentenbeginn", p.ret+" Jahre"], ["Eigener Beitrag", eur(p.mon)+" im Monat"],
       ["Kinder mit Kindergeld", p.kids ? p.kids+" für "+p.kidyrs+" Jahre" : "keine"],
       ["Index", IDX[p.idx].short], ["Marktrendite", pct(p.r)+" p. a."], ["Kosten Altersvorsorgedepot", pct(p.cAvd)], ["Kosten ETF-Sparplan", pct(p.cEtf)],
       ["Riester: Rendite / Kosten", pct(p.rRie)+" / "+pct(p.cRie)],
-      ["Grenzsteuersatz heute", p.tNow+" %"], ["Steuersatz im Alter", p.tOld+" %"], ["Steuererstattung angelegt", p.reinv?"ja":"nein"],
+      ["Grenzsteuersatz heute", p.tNow+" %"], ["Steuersatz im Alter", p.tOld+" %"], ["Steuererstattung angelegt", p.reinv?"ja":"nein"], ["Inflation", pct(p.infl)+" p. a."+(p.dyn?", Beitrag wächst mit":"")+(p.real?", Ergebnis real":", Ergebnis nominal")],
       ["Jahre ohne Förderung", p.abYrs ? p.abYrs+" (ab "+p.abFrom+" Jahren)" : "keine"], ["Beiträge im Ausland", p.abYrs ? (p.abMode==="pause" ? "pausiert, in freien ETF" : "ungefördert weiter") + (p.abTax ? ", " + pct(p.abTax) + " Steuer p. a." : "") : "–"], ["Wohnsitz bei Rentenbeginn", p.home==="third"?"Drittstaat":"DE oder EU/EWR"],
     ];
     let ya = y + 16;
@@ -773,7 +790,7 @@ tr.sub td:first-child{padding-left:14px}
     const cx = [x2 + colW*0.45, x2 + colW*0.68, x2 + colW - 6];
     let yb = y + 46;
     [["Depot",COL.avd],["ETF",COL.etf],["Riester",COL.rie]].forEach(([h,cc],i) => txt(h, cx[i], yb, 14, 600, cc, "right"));
-    const sideTax = s.side - etfNet(s.side, s.sideB), rsideTax = s.rside - etfNet(s.rside, s.rsideB);
+    const sideTax = s.sideTax, rsideTax = s.rsideTax;
     const neg = v => v>0.5 ? "−"+eur(v) : "–";
     const tab = [
       ["Einzahlungen", eur(s.a.own), eur(s.a.own), eur(s.ri.own)],
@@ -795,7 +812,7 @@ tr.sub td:first-child{padding-left:14px}
     // Ausland + Hinweis
     const aus = p.home==="third"
       ? `Ausland: Bei Wohnsitz außerhalb von EU/EWR ab Rentenbeginn werden ${eur(s.avdBack)} an Zulagen und Steuervorteilen zurückgefordert (§ 95 EStG).`
-      : p.abYrs ? `Ausland: keine Rückforderung, da der Wohnsitz bei Rentenbeginn in Deutschland oder der EU/EWR liegt. In ${Math.min(p.abYrs, Math.max(0,p.ret-p.abFrom))} Jahren ohne Förderberechtigung fehlen die Zulagen.`
+      : s.abN ? `Ausland: keine Rückforderung, da der Wohnsitz bei Rentenbeginn in Deutschland oder der EU/EWR liegt. In ${s.abN} Jahren ohne Förderberechtigung fehlen die Zulagen.`
       : "Ausland: keine Auslandsjahre angenommen.";
     font(15); wrap(ctx, aus, CW).forEach(l => { txt(l, M, y, 15, 400, COL.text); y += 22; });
     y += 18;

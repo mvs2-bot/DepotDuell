@@ -7,6 +7,7 @@ Vergleichsrechner für die private Altersvorsorge: das neue **Altersvorsorgedepo
 - **Eigene Annahmen:** Alter, Beitrag, Kinder, Rendite, Kosten, Steuersatz heute und im Alter, jeweils mit Hinweis, was realistisch ist
 - **Ergebnis:** Nettobetrag je Variante mit Balken (Einzahlungen, Förderung, Ertrag, Steuern), Verlauf, Aufschlüsselung und Gewinnschwelle beim Steuersatz im Alter
 - **Index:** MSCI World oder FTSE Global All Cap; Depot- und ETF-Kosten ab 0 %
+- **Startjahr und Inflation:** späterer Start ab 2027 möglich (Ende ergibt sich aus dem Rentenbeginn); Inflation mit Anzeige in Kaufkraft von 2027 und optional mitwachsendem Beitrag
 - **Export:** eine A4-Seite mit Annahmen und Ergebnissen als PDF oder PNG (auf dem Handy über Teilen)
 - **Ausland:** Jahre ohne Förderberechtigung und Rückforderung bei Wohnsitz außerhalb von EU/EWR (§ 95 EStG); Beiträge in diesen Jahren wahlweise ungefördert weiter oder pausiert (Geld in freien ETF), optional laufende Steuer des Auslands auf Fondserträge
 - **Handy:** drei Reiter statt einer langen Seite; Regler nur am Knopf greifbar, dazu Minus/Plus
