@@ -12,6 +12,7 @@ Vergleichsrechner für die private Altersvorsorge: das neue **Altersvorsorgedepo
 - **Ausland:** Jahre ohne Förderberechtigung und Rückforderung bei Wohnsitz außerhalb von EU/EWR (§ 95 EStG); Beiträge in diesen Jahren wahlweise ungefördert weiter oder pausiert (Geld in freien ETF), optional laufende Steuer des Auslands auf Fondserträge
 - **Handy:** drei Reiter statt einer langen Seite; Regler nur am Knopf greifbar, dazu Minus/Plus
 - **Hell/Dunkel-Modus:** gemeinsame Einstellung mit dem Dashboard (`overall-theme`)
+- **Speichern:** geänderte Eingaben bleiben im Browser (localStorage `depotduell-inputs`), „Zurücksetzen“ holt die Standardwerte
 - **PWA:** installierbar und offline nutzbar
 
 Regeln nach dem Altersvorsorgereformgesetz (BGBl. I 2026 Nr. 156), Stand November 2026. Vereinfachtes Modell, keine Steuerberatung.

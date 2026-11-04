@@ -73,6 +73,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* ---------- Eingaben ---------- */
 form{display:flex;flex-direction:column}
 .formhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.headtools{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.formhead h2{white-space:nowrap}
+@media (max-width:420px){.formhead h2{font-size:14px}.headtools{gap:10px}.headtools .switch{font-size:12.5px}.resetbtn .lbl{display:none}.resetbtn{padding:6px}}
+.resetbtn{display:inline-flex;align-items:center;gap:5px;border:0;background:none;padding:4px 0;font-size:13.5px;font-weight:600;color:var(--p1);cursor:pointer}
+.resetbtn:hover{text-decoration:underline}
 .formhead h2{font-size:15px;margin:0;font-weight:600}
 .switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;min-height:44px}
 .switch input{width:16px;height:16px;accent-color:var(--avd)}
@@ -270,7 +275,8 @@ tr.sub td:first-child{padding-left:14px}
     <form class="panel" id="form" autocomplete="off" data-pane="eingaben">
       <div class="formhead">
         <h2>Deine Annahmen</h2>
-        <label class="switch"><input type="checkbox" id="allhints">Alle Hinweise</label>
+        <div class="headtools"><button type="button" class="resetbtn" id="resetBtn" hidden aria-label="Auf Standardwerte zurücksetzen"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v2.8h2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lbl">Zurücksetzen</span></button>
+        <label class="switch"><input type="checkbox" id="allhints">Alle Hinweise</label></div>
       </div>
 
       <details class="group" open>
@@ -283,7 +289,7 @@ tr.sub td:first-child{padding-left:14px}
             <input type="range" id="start" min="2027" max="2050" step="1" value="2027">
             <div class="hint">Frühester Start ist der <b>1.1.2027</b>. Wer später anfängt, hat bis zum Rentenbeginn weniger Sparjahre: <span id="spanInfo"></span></div></div>
           <div class="field"><div class="row"><label for="ret">Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Rentenbeginn"></button><output id="ret_o"></output></div>
-            <input type="range" id="ret" min="65" max="70" step="1" value="67">
+            <input type="range" id="ret" min="65" max="70" step="1" value="65">
             <div class="hint">Die Auszahlung beginnt <b>frühestens mit 65, spätestens mit 70</b>.</div></div>
           <div class="field"><div class="row"><label for="mon">Eigener Beitrag pro Monat</label><button type="button" class="info" aria-label="Hinweis zum Beitrag"></button><output id="mon_o"></output></div>
             <input type="range" id="mon" min="10" max="570" step="5" value="150">
@@ -292,7 +298,7 @@ tr.sub td:first-child{padding-left:14px}
             <input type="range" id="kids" min="0" max="4" step="1" value="0">
             <div class="hint">Pro Kind bis zu <b>300 € Kinderzulage</b> im Jahr, schon ab 25 € Eigenbeitrag im Monat. Gilt nur, solange Kindergeld fließt.</div></div>
           <div class="field"><div class="row"><label for="kidyrs">Jahre mit Kinderzulage</label><button type="button" class="info" aria-label="Hinweis zur Dauer der Kinderzulage"></button><output id="kidyrs_o"></output></div>
-            <input type="range" id="kidyrs" min="0" max="25" step="1" value="0">
+            <input type="range" id="kidyrs" min="0" max="25" step="1" value="18">
             <div class="hint">Typisch <b>18 bis 25 Jahre</b> je Kind: Kindergeld bis 18, in Ausbildung bis 25. Vereinfacht ab dem ersten Sparjahr gerechnet.</div></div>
         </div>
       </details>
@@ -307,10 +313,10 @@ tr.sub td:first-child{padding-left:14px}
             </select>
             <div class="hint"><b>MSCI World:</b> rund 1.400 große und mittlere Unternehmen aus 23 Industrieländern. <b>FTSE Global All Cap:</b> rund 9.000 Unternehmen weltweit, auch Schwellenländer und kleine Firmen, also breiter gestreut. Langfristig lagen beide ungefähr ähnlich; im Rechner bestimmen Rendite und Kosten unten das Ergebnis. Der Index gilt für den freien Sparplan und das Altersvorsorgedepot.</div></div>
           <div class="field"><div class="row"><label for="r">Marktrendite <span class="idxname">MSCI World</span></label><button type="button" class="info" aria-label="Hinweis zur Rendite"></button><output id="r_o"></output></div>
-            <input type="range" id="r" min="0" max="10" step="0.5" value="6">
+            <input type="range" id="r" min="0" max="10" step="0.5" value="5">
             <div class="hint">Historisch langfristig etwa <b>7 bis 8 % pro Jahr</b> (nominal, ungefähr), mit einzelnen Jahren um −40 %. Für die Planung realistisch: <b>5 bis 7 %</b>, vorsichtig: 4 %.</div></div>
           <div class="field"><div class="row"><label for="cAvd">Kosten Altersvorsorgedepot</label><button type="button" class="info" aria-label="Hinweis zu Depotkosten"></button><output id="cAvd_o"></output></div>
-            <input type="range" id="cAvd" min="0" max="2" step="0.05" value="0.4">
+            <input type="range" id="cAvd" min="0" max="2" step="0.05" value="0.1">
             <div class="hint">ETF-Depot bei günstigem Broker: <b>0,2 bis 0,5 %</b> im Jahr. Standarddepot: gesetzlich <b>höchstens 1,0 %</b>. Garantieprodukte von Versicherern eher 1 bis 2 %. <b>0 %</b> nur, wenn Anbieter und Fonds wirklich nichts kosten, etwa bei einer Aktion; die laufenden Kosten des ETF fallen sonst trotzdem an. Die echten Preise stehen erst ab 2027 fest.</div></div>
           <div class="field"><div class="row"><label for="cEtf">Kosten ETF-Sparplan</label><button type="button" class="info" aria-label="Hinweis zu ETF-Kosten"></button><output id="cEtf_o"></output></div>
             <input type="range" id="cEtf" min="0" max="1" step="0.05" value="0.2">
@@ -336,7 +342,7 @@ tr.sub td:first-child{padding-left:14px}
             <input type="range" id="tNow" min="0" max="45" step="1" value="38">
             <div class="hint">Ist dein Steuervorteil aus dem Sonderausgabenabzug höher als die Zulage, erstattet das Finanzamt die Differenz. Grob, ledig: ca. <b>30 %</b> bei 40.000 € zu versteuerndem Einkommen, ca. <b>38 %</b> bei 60.000 €, <b>42 %</b> ab etwa 70.000 €.</div></div>
           <div class="field"><div class="row"><label for="tOld">Steuersatz auf Auszahlungen</label><button type="button" class="info" aria-label="Hinweis zum Steuersatz im Alter"></button><output id="tOld_o"></output></div>
-            <input type="range" id="tOld" min="0" max="45" step="1" value="24">
+            <input type="range" id="tOld" min="0" max="45" step="1" value="25">
             <div class="hint"><b>Der wichtigste Regler.</b> Die Auszahlungen kommen auf deine gesetzliche Rente obendrauf, entscheidend ist also dein Grenzsteuersatz im Alter. Für Durchschnittsverdiener meist <b>15 bis 25 %</b>, mit hoher Rente, Mieteinnahmen oder Betriebsrente auch 30 % und mehr.</div></div>
           <label class="check"><input type="checkbox" id="reinv" checked><span>Steuererstattung in einen ETF-Sparplan anlegen. Ohne Häkchen zählt sie nur als Summe, ohne Rendite.</span></label>
         </div>
@@ -890,10 +896,32 @@ tr.sub td:first-child{padding-left:14px}
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { setTab(b.dataset.go); window.scrollTo({top:0}); }));
   let startTab = "eingaben"; try{ startTab = localStorage.getItem("vorsorge-tab") || "eingaben"; }catch(e){}
 
-  $("form").addEventListener("input", render);
+  // Eingaben lokal merken (nur in diesem Browser), Zurücksetzen holt die Standardwerte
+  const STORE = "depotduell-inputs";
+  const fields = [...$("form").querySelectorAll("input,select")].filter(el => el.id && el.id !== "allhints");
+  const isDefault = () => fields.every(el => el.type==="checkbox" ? el.checked===el.defaultChecked
+    : el.tagName==="SELECT" ? [...el.options].find(o => o.defaultSelected)?.value === el.value || (el.selectedIndex===0 && ![...el.options].some(o=>o.defaultSelected)) : el.value===el.defaultValue);
+  const save = () => {
+    const dflt = isDefault(); $("resetBtn").hidden = dflt;
+    try{ if(dflt) localStorage.removeItem(STORE); else localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(fields.map(el => [el.id, el.type==="checkbox" ? el.checked : el.value])))); }catch(e){}
+  };
+  try{ const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+    if(saved) fields.forEach(el => { if(!(el.id in saved)) return; if(el.type==="checkbox") el.checked = !!saved[el.id];
+      else if(el.tagName==="SELECT"){ if([...el.options].some(o => o.value===saved[el.id])) el.value = saved[el.id]; }
+      else { const v = parseFloat(saved[el.id]); if(!isNaN(v)) el.value = Math.min(el.max, Math.max(el.min, v)); } });
+  }catch(e){}
+  $("resetBtn").addEventListener("click", () => {
+    const h = allh.checked;
+    fields.forEach(el => { if(el.type==="checkbox") el.checked = el.defaultChecked;
+      else if(el.tagName==="SELECT"){ const o = [...el.options].find(o => o.defaultSelected) || el.options[0]; el.value = o.value; }
+      else el.value = el.defaultValue; });
+    allh.checked = h; render(); syncSteps(); save();
+  });
+  $("form").addEventListener("input", () => { render(); save(); });
+  $("form").addEventListener("change", save);
   $("form").addEventListener("submit", e => e.preventDefault());
   let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => drawChart(S.series), 120); });
-  render(); syncSteps(); setTab(startTab);
+  render(); syncSteps(); setTab(startTab); save();
 
   // Hell/Dunkel: gemeinsam mit Dashboard und allen Apps (overall-theme)
   const MOON = '<svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
