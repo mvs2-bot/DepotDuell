@@ -137,6 +137,14 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px color
 .key .fund{background:color-mix(in srgb,var(--ink) 55%,var(--surface))}
 .key .gain{background:color-mix(in srgb,var(--ink) 22%,var(--surface))}
 .key .tax{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 45%,var(--surface)) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 35%,transparent)}
+.cons{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.cons li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cons li:last-child{border-bottom:0}
+.cons li b{font-weight:600;color:var(--ink)}
+.cons li span.t{grid-column:1;color:var(--muted);font-size:13px;line-height:1.4}
+.cons li em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;max-width:42vw;text-align:center;background:var(--soft);color:var(--muted)}
+.cons li em.hit{background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn)}
+.cons li em.ok{background:color-mix(in srgb,var(--avd) 14%,var(--surface));color:var(--avd)}
 .verdict{margin:0;font-size:14.5px;padding:14px 18px;max-width:none}
 .verdict b{font-weight:600}
 .block{padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -378,6 +386,12 @@ tr.sub td:first-child{padding-left:14px}
           <p class="taxnote"><b>So wird versteuert:</b> Der <b>geförderte Teil</b> (Beiträge bis 1.800 € im Jahr plus Zulagen, samt Erträgen) wird bei Auszahlung voll mit deinem Steuersatz im Alter versteuert. Beim <b>ungeförderten Teil</b> zählt nur der Ertrag, und davon nur die Hälfte, wenn der Vertrag mindestens 12 Jahre läuft und du ab 62 auszahlst. <b>Freie ETFs</b> (der Vergleichssparplan, angelegte Erstattungen und pausierte Beiträge) zahlen Abgeltungsteuer auf 70 % des Gewinns.</p>
         </section>
         <p class="panel verdict" id="verdict"></p>
+        <section class="panel block">
+          <h2>Wann der freie ETF besser ist</h2>
+          <p class="taxnote" style="margin:0">Das Altersvorsorgedepot lohnt sich, wenn das Geld bis zur Rente liegen bleibt. In diesen Fällen kann der freie Sparplan vorne liegen:</p>
+          <ul class="cons" id="cons"></ul>
+          <p class="taxnote" style="margin:0"><b>Oft sinnvoll:</b> 150 € im Monat ins Altersvorsorgedepot, dann gibt es die volle Grundzulage. Was du darüber hinaus sparen willst, kommt in den freien ETF.</p>
+        </section>
         <section class="panel block exportbox">
           <h2>Exportieren</h2>
           <p class="note">Eine A4-Seite mit deinen Annahmen und allen Ergebnissen, zum Speichern oder Teilen.</p>
@@ -501,15 +515,23 @@ tr.sub td:first-child{padding-left:14px}
             avdTax: S*tOld + half*Math.max(0,U-Ub)*tOld, rieTax: R*tOld + half*Math.max(0,Ru-Rub)*tOld};
   }
 
-  function breakEven(p){
-    const f = t => simulate(p,t).avdNet - simulate(p,t).etf;
-    if(f(0) < 0) return 0;
-    if(f(60) > 0) return null;
-    let lo=0, hi=60;
-    for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(f(m)>0) lo=m; else hi=m; }
-    return lo;
-  }
 
+  function consList(p, s, be){
+    const fmt1 = x => x.toLocaleString("de-DE",{maximumFractionDigits:1});
+    const taxHit = be !== null && p.tOld >= be;
+    return [
+      {t:"Hoher Steuersatz im Alter", d:"Die Auszahlung aus dem geförderten Teil wird voll mit deinem Steuersatz versteuert, ein ETF-Gewinn nur mit rund 18,5 %. Hohe Rente, Pension oder Mieteinnahmen treiben den Satz hoch.",
+        c: be===null ? "ok" : taxHit ? "hit" : "ok", l: be===null ? "bei dir nein" : taxHit ? "trifft zu" : `nein, ${p.tOld} % < ${fmt1(be)} %`},
+      {t:"Wohnsitz außerhalb von EU/EWR bei Rentenbeginn", d:"Zum Beispiel Schweiz, UK oder USA: Zulagen und Steuervorteile werden zurückgefordert (§ 95 EStG).",
+        c: p.home==="third" ? "hit" : "ok", l: p.home==="third" ? "trifft zu" : "bei dir nein"},
+      {t:"Viele Jahre ohne Förderung", d:"Ohne Zulagen bleibt beim Depot nur die Steuerstundung, und die Kosten sind meist etwas höher als beim ETF.",
+        c: p.abYrs>=15 ? "hit" : "", l: p.abYrs ? p.abYrs+" Jahre eingestellt" : "keine eingestellt"},
+      {t:"Geld vor 65 gebraucht", d:"Für Haus, Auszeit oder Notfall: eine vorzeitige Entnahme ist schädliche Verwendung, die Förderung geht zurück. Den ETF kannst du jederzeit verkaufen.", c:"", l:"selbst prüfen"},
+      {t:"Tod vor der Auszahlung", d:"Ohne Übertrag auf den Ehepartner geht die Förderung zurück. Einen ETF erben die Erben vollständig.", c:"", l:"selbst prüfen"},
+      {t:"Freiwillig gesetzlich oder privat krankenversichert", d:"Auf die Auszahlungen können Kranken- und Pflegebeiträge anfallen. Im Rechner nicht berücksichtigt.", c:"", l:"selbst prüfen"},
+      {t:"Wenig Flexibilität", d:"Auszahlung ab 65 bis 70, als Auszahlplan bis mindestens 85, höchstens 30 % auf einmal. Die Regeln können sich bis zur Rente noch ändern.", c:"", l:"immer"},
+    ];
+  }
 
   function breakEven(p){
     const f = t => { const s = simulate(p,t); return s.avdNet - s.etf; };
@@ -605,6 +627,7 @@ tr.sub td:first-child{padding-left:14px}
     else if(be===0) v += `Mit diesen Werten ist der freie ETF-Sparplan schon bei 0 % Steuer im Alter besser.`;
     else v += `Das Altersvorsorgedepot schlägt den freien Sparplan, solange dein Steuersatz auf die Auszahlungen unter <b>${be.toLocaleString("de-DE",{maximumFractionDigits:1})} %</b> liegt (eingestellt: ${P.tOld} %).`;
     $("verdict").innerHTML = v;
+    $("cons").innerHTML = consList(P, s, be).map(c => `<li><b>${c.t}</b><em class="${c.c}">${c.l}</em><span class="t">${c.d}</span></li>`).join("");
     drawChart(s.series);
     const row = (label, a, e, r, cls="") => `<tr class="${cls}"><td>${label}</td><td class="num">${a}</td><td class="num">${e}</td><td class="num">${r}</td></tr>`;
     const neg = x => x>0.5 ? "−"+eur(x) : "–";
@@ -775,6 +798,10 @@ tr.sub td:first-child{padding-left:14px}
       : p.abYrs ? `Ausland: keine Rückforderung, da der Wohnsitz bei Rentenbeginn in Deutschland oder der EU/EWR liegt. In ${Math.min(p.abYrs, Math.max(0,p.ret-p.abFrom))} Jahren ohne Förderberechtigung fehlen die Zulagen.`
       : "Ausland: keine Auslandsjahre angenommen.";
     font(15); wrap(ctx, aus, CW).forEach(l => { txt(l, M, y, 15, 400, COL.text); y += 22; });
+    y += 18;
+    const hits = consList(p, s, be).filter(c => c.c==="hit").map(c => c.t);
+    const cons = "Der freie ETF kann besser sein bei: hohem Steuersatz im Alter, Wohnsitz außerhalb von EU/EWR bei Rentenbeginn, vielen Jahren ohne Förderung, Bedarf vor 65, Tod vor der Auszahlung ohne Übertrag, freiwilliger oder privater Krankenversicherung im Alter." + (hits.length ? " Bei deinen Annahmen trifft zu: " + hits.join(", ") + "." : " Bei deinen Annahmen trifft keiner der berechenbaren Punkte zu.");
+    font(15); wrap(ctx, cons, CW).forEach(l => { txt(l, M, y, 15, 400, COL.text); y += 22; });
     y += 18;
     const hin = "Vereinfachtes Modell nach dem Altersvorsorgereformgesetz (BGBl. I 2026 Nr. 156), Stand November 2026: konstante Rendite und Kosten, Beiträge jährlich, ETF-Verkauf auf einmal mit Rentenbeginn (Teilfreistellung 30 %, ohne Vorabpauschale und Kirchensteuer). Geförderter Teil voll mit dem Steuersatz im Alter, ungeförderter Teil nur der halbe Ertrag (ab 62 und 12 Jahren Laufzeit, § 22 Nr. 5 EStG), Kranken- und Pflegeversicherung im Alter nicht berücksichtigt. Keine Steuer- oder Anlageberatung.";
     font(13); wrap(ctx, hin, CW).forEach(l => { txt(l, M, y, 13, 400, COL.mute); y += 19; });
