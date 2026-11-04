@@ -247,10 +247,10 @@ details.more[open]>summary svg{transform:rotate(180deg)}
         <summary><span class="t">Du und dein Beitrag</span><span class="s" id="sum1"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
         <div class="fields">
           <div class="field"><div class="row"><label for="age">Alter beim Start 2027</label><button type="button" class="info" aria-label="Hinweis zum Alter"></button><output id="age_o"></output></div>
-            <input type="range" id="age" min="18" max="60" step="1" value="30">
+            <input type="range" id="age" min="18" max="60" step="1" value="32">
             <div class="hint">Unter 25 gibt es einmalig <b>200 € Berufseinsteigerbonus</b>. Je früher du startest, desto mehr Jahre Zinseszins.</div></div>
           <div class="field"><div class="row"><label for="ret">Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Rentenbeginn"></button><output id="ret_o"></output></div>
-            <input type="range" id="ret" min="65" max="70" step="1" value="65">
+            <input type="range" id="ret" min="65" max="70" step="1" value="67">
             <div class="hint">Die Auszahlung beginnt <b>frühestens mit 65, spätestens mit 70</b>.</div></div>
           <div class="field"><div class="row"><label for="mon">Eigener Beitrag pro Monat</label><button type="button" class="info" aria-label="Hinweis zum Beitrag"></button><output id="mon_o"></output></div>
             <input type="range" id="mon" min="10" max="570" step="5" value="150">
@@ -259,7 +259,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
             <input type="range" id="kids" min="0" max="4" step="1" value="0">
             <div class="hint">Pro Kind bis zu <b>300 € Kinderzulage</b> im Jahr, schon ab 25 € Eigenbeitrag im Monat. Gilt nur, solange Kindergeld fließt.</div></div>
           <div class="field"><div class="row"><label for="kidyrs">Jahre mit Kinderzulage</label><button type="button" class="info" aria-label="Hinweis zur Dauer der Kinderzulage"></button><output id="kidyrs_o"></output></div>
-            <input type="range" id="kidyrs" min="0" max="25" step="1" value="18">
+            <input type="range" id="kidyrs" min="0" max="25" step="1" value="0">
             <div class="hint">Typisch <b>18 bis 25 Jahre</b> je Kind: Kindergeld bis 18, in Ausbildung bis 25. Vereinfacht ab dem ersten Sparjahr gerechnet.</div></div>
         </div>
       </details>
@@ -289,10 +289,10 @@ details.more[open]>summary svg{transform:rotate(180deg)}
         <summary><span class="t">Steuern</span><span class="s" id="sum3"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
         <div class="fields">
           <div class="field"><div class="row"><label for="tNow">Grenzsteuersatz heute</label><button type="button" class="info" aria-label="Hinweis zum Steuersatz heute"></button><output id="tNow_o"></output></div>
-            <input type="range" id="tNow" min="0" max="45" step="1" value="30">
+            <input type="range" id="tNow" min="0" max="45" step="1" value="38">
             <div class="hint">Ist dein Steuervorteil aus dem Sonderausgabenabzug höher als die Zulage, erstattet das Finanzamt die Differenz. Grob, ledig: ca. <b>30 %</b> bei 40.000 € zu versteuerndem Einkommen, ca. <b>38 %</b> bei 60.000 €, <b>42 %</b> ab etwa 70.000 €.</div></div>
           <div class="field"><div class="row"><label for="tOld">Steuersatz auf Auszahlungen</label><button type="button" class="info" aria-label="Hinweis zum Steuersatz im Alter"></button><output id="tOld_o"></output></div>
-            <input type="range" id="tOld" min="0" max="45" step="1" value="20">
+            <input type="range" id="tOld" min="0" max="45" step="1" value="24">
             <div class="hint"><b>Der wichtigste Regler.</b> Die Auszahlungen kommen auf deine gesetzliche Rente obendrauf, entscheidend ist also dein Grenzsteuersatz im Alter. Für Durchschnittsverdiener meist <b>15 bis 25 %</b>, mit hoher Rente, Mieteinnahmen oder Betriebsrente auch 30 % und mehr.</div></div>
           <label class="check"><input type="checkbox" id="reinv" checked><span>Steuererstattung in einen ETF-Sparplan anlegen. Ohne Häkchen zählt sie nur als Summe, ohne Rendite.</span></label>
         </div>
@@ -302,10 +302,10 @@ details.more[open]>summary svg{transform:rotate(180deg)}
         <summary><span class="t">Ausland</span><span class="s" id="sum4"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
         <div class="fields">
           <div class="field"><div class="row"><label for="abYrs">Jahre ohne Förderung</label><button type="button" class="info" aria-label="Hinweis zu Auslandsjahren"></button><output id="abYrs_o"></output></div>
-            <input type="range" id="abYrs" min="0" max="40" step="1" value="0">
+            <input type="range" id="abYrs" min="0" max="40" step="1" value="5">
             <div class="hint">Zum Beispiel Arbeit in Österreich bei einem dortigen Arbeitgeber. In diesen Jahren gibt es <b>keine Zulagen und keine Steuererstattung</b>; du zahlst ungefördert weiter. Bei einer Entsendung durch einen deutschen Arbeitgeber bleibt die Förderung meist bestehen.</div></div>
           <div class="field"><div class="row"><label for="abFrom">Umzug mit Alter</label><output id="abFrom_o"></output></div>
-            <input type="range" id="abFrom" min="18" max="69" step="1" value="40"></div>
+            <input type="range" id="abFrom" min="18" max="69" step="1" value="33"></div>
           <div class="field"><div class="row"><label for="home">Wohnsitz bei Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Wohnsitz"></button></div>
             <select id="home">
               <option value="eu">Deutschland oder EU/EWR (z. B. Österreich)</option>
