@@ -205,6 +205,9 @@ details.more[open]>summary svg{transform:rotate(180deg)}
   input[type=range]::-webkit-slider-thumb{pointer-events:auto;width:30px;height:30px;margin-top:-12px}
   input[type=range]::-moz-range-thumb{pointer-events:auto;width:26px;height:26px}
 }
+.taxnote{margin:12px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.taxnote b{color:var(--text);font-weight:600}
+tr.sub td:first-child{padding-left:14px}
 .exportbox .note{margin:0;font-size:13.5px;color:var(--muted)}
 .exportbox .note:empty{display:none}
 .exprow{display:flex;flex-wrap:wrap;gap:10px}
@@ -372,6 +375,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
             <thead><tr><th></th><th style="--c:var(--avd)">Depot</th><th style="--c:var(--etf)">ETF</th><th style="--c:var(--rie)">Riester</th></tr></thead>
             <tbody id="tbody"></tbody>
           </table></div>
+          <p class="taxnote"><b>So wird versteuert:</b> Der <b>geförderte Teil</b> (Beiträge bis 1.800 € im Jahr plus Zulagen, samt Erträgen) wird bei Auszahlung voll mit deinem Steuersatz im Alter versteuert. Beim <b>ungeförderten Teil</b> zählt nur der Ertrag, und davon nur die Hälfte, wenn der Vertrag mindestens 12 Jahre läuft und du ab 62 auszahlst. <b>Freie ETFs</b> (der Vergleichssparplan, angelegte Erstattungen und pausierte Beiträge) zahlen Abgeltungsteuer auf 70 % des Gewinns.</p>
         </section>
         <p class="panel verdict" id="verdict"></p>
         <section class="panel block exportbox">
@@ -483,16 +487,18 @@ details.more[open]>summary svg{transform:rotate(180deg)}
     R = Math.max(R, Rguar);
     if(series.length) series[series.length-1].rie = R + Ru + rside;
     const third = p.home === "third";
+    const half = (N >= 12 && p.ret >= 62) ? 0.5 : 1;   // ungeförderte Beiträge: halber Ertrag steuerpflichtig (§ 22 Nr. 5 S. 2 c i. V. m. § 20 Abs. 1 Nr. 6 S. 2 EStG)
     // Netto AVD
-    let avdNet = S*(1-tOld) + U - 0.5*Math.max(0,U-Ub)*tOld + etfNet(side,sideB) + cashRefund;
+    let avdNet = S*(1-tOld) + U - half*Math.max(0,U-Ub)*tOld + etfNet(side,sideB) + cashRefund;
     let avdBack = third ? a.zul + a.tax : 0;
     avdNet -= avdBack;
     const etf = etfNet(V,Vb);
-    let rieNet = R*(1-tOld) + Ru - 0.5*Math.max(0,Ru-Rub)*tOld + etfNet(rside,rsideB) + (p.reinv ? 0 : ri.tax);
+    let rieNet = R*(1-tOld) + Ru - half*Math.max(0,Ru-Rub)*tOld + etfNet(rside,rsideB) + (p.reinv ? 0 : ri.tax);
     let rieBack = third ? ri.zul + ri.tax : 0;
     rieNet -= rieBack;
     return {N, series, a, ri, avdGross:S+U, side, sideB, rside, rsideB, cashRefund, avdNet, avdBack, etfGross:V, etf, etfTax:V-etf, rieGross:R+Ru, rieNet, rieBack,
-            avdTax: S*tOld + 0.5*Math.max(0,U-Ub)*tOld, rieTax: R*tOld + 0.5*Math.max(0,Ru-Rub)*tOld};
+            half, avdTaxF: S*tOld, avdTaxU: half*Math.max(0,U-Ub)*tOld, rieTaxF: R*tOld, rieTaxU: half*Math.max(0,Ru-Rub)*tOld,
+            avdTax: S*tOld + half*Math.max(0,U-Ub)*tOld, rieTax: R*tOld + half*Math.max(0,Ru-Rub)*tOld};
   }
 
   function breakEven(p){
@@ -608,7 +614,9 @@ details.more[open]>summary svg{transform:rotate(180deg)}
       row("Zulagen", eur(s.a.zul), "–", eur(s.ri.zul)) +
       row("Steuererstattung", eur(s.a.tax), "–", eur(s.ri.tax)) +
       row("Wert mit Rentenbeginn", eur(avdGross), eur(s.etfGross), eur(rieGross)) +
-      row("Steuern", neg(s.avdTax + sideTax), neg(s.etfTax), neg(s.rieTax + rsideTax)) +
+      row("Steuer geförderter Teil", neg(s.avdTaxF), "–", neg(s.rieTaxF), "sub") +
+      row("Steuer ungeförderter Teil", neg(s.avdTaxU), "–", neg(s.rieTaxU), "sub") +
+      row("Steuer freier ETF", neg(sideTax), neg(s.etfTax), neg(rsideTax), "sub") +
       row("Rückforderung", neg(s.avdBack), "–", neg(s.rieBack)) +
       row("Netto", eur(s.avdNet), eur(s.etf), eur(s.rieNet), "total");
     const st = $("abStatus");
@@ -749,7 +757,9 @@ details.more[open]>summary svg{transform:rotate(180deg)}
       ["Zulagen", eur(s.a.zul), "–", eur(s.ri.zul)],
       ["Steuererstattung", eur(s.a.tax), "–", eur(s.ri.tax)],
       ["Wert mit Rentenbeginn", eur(avdGross), eur(s.etfGross), eur(rieGross)],
-      ["Steuern", neg(s.avdTax+sideTax), neg(s.etfTax), neg(s.rieTax+rsideTax)],
+      ["Steuer gefördert", neg(s.avdTaxF), "–", neg(s.rieTaxF)],
+      ["Steuer ungefördert", neg(s.avdTaxU), "–", neg(s.rieTaxU)],
+      ["Steuer freier ETF", neg(sideTax), neg(s.etfTax), neg(rsideTax)],
       ["Rückforderung", neg(s.avdBack), "–", neg(s.rieBack)],
       ["Netto", eur(s.avdNet), eur(s.etf), eur(s.rieNet)],
     ];
@@ -766,7 +776,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
       : "Ausland: keine Auslandsjahre angenommen.";
     font(15); wrap(ctx, aus, CW).forEach(l => { txt(l, M, y, 15, 400, COL.text); y += 22; });
     y += 18;
-    const hin = "Vereinfachtes Modell nach dem Altersvorsorgereformgesetz (BGBl. I 2026 Nr. 156), Stand November 2026: konstante Rendite und Kosten, Beiträge jährlich, ETF-Verkauf auf einmal mit Rentenbeginn (Teilfreistellung 30 %, ohne Vorabpauschale und Kirchensteuer), Kranken- und Pflegeversicherung im Alter nicht berücksichtigt. Keine Steuer- oder Anlageberatung.";
+    const hin = "Vereinfachtes Modell nach dem Altersvorsorgereformgesetz (BGBl. I 2026 Nr. 156), Stand November 2026: konstante Rendite und Kosten, Beiträge jährlich, ETF-Verkauf auf einmal mit Rentenbeginn (Teilfreistellung 30 %, ohne Vorabpauschale und Kirchensteuer). Geförderter Teil voll mit dem Steuersatz im Alter, ungeförderter Teil nur der halbe Ertrag (ab 62 und 12 Jahren Laufzeit, § 22 Nr. 5 EStG), Kranken- und Pflegeversicherung im Alter nicht berücksichtigt. Keine Steuer- oder Anlageberatung.";
     font(13); wrap(ctx, hin, CW).forEach(l => { txt(l, M, y, 13, 400, COL.mute); y += 19; });
 
     // Höhe auf Inhalt kürzen (mindestens A4-Verhältnis bleibt für PDF erhalten)
