@@ -205,6 +205,13 @@ details.more[open]>summary svg{transform:rotate(180deg)}
   input[type=range]::-webkit-slider-thumb{pointer-events:auto;width:30px;height:30px;margin-top:-12px}
   input[type=range]::-moz-range-thumb{pointer-events:auto;width:26px;height:26px}
 }
+.exportbox .note{margin:0;font-size:13.5px;color:var(--muted)}
+.exportbox .note:empty{display:none}
+.exprow{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--p1);color:var(--on-p1);font-weight:600;font-size:15px;cursor:pointer}
+.btn+.btn{background:var(--seg);color:var(--ink)}
+.btn:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.6;cursor:progress}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -223,7 +230,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
 
 <main class="wrap">
   <div class="intro">
-    <h2>Altersvorsorgedepot, Riester oder freier MSCI-World-Sparplan?</h2>
+    <h2>Altersvorsorgedepot, Riester oder freier ETF-Sparplan?</h2>
     <p>Was bleibt mit Rentenbeginn nach Steuern übrig? Regeln nach dem Altersvorsorgereformgesetz (Start 1.1.2027), Stand November 2026. Vereinfachtes Modell, keine Steuerberatung.</p>
   </div>
 
@@ -267,15 +274,21 @@ details.more[open]>summary svg{transform:rotate(180deg)}
       <details class="group">
         <summary><span class="t">Rendite und Kosten</span><span class="s" id="sum2"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
         <div class="fields">
-          <div class="field"><div class="row"><label for="r">Marktrendite MSCI World</label><button type="button" class="info" aria-label="Hinweis zur Rendite"></button><output id="r_o"></output></div>
+          <div class="field"><div class="row"><label for="idx">Index für die ETFs</label><button type="button" class="info" aria-label="Hinweis zum Index"></button></div>
+            <select id="idx">
+              <option value="msci">MSCI World</option>
+              <option value="ftse">FTSE Global All Cap</option>
+            </select>
+            <div class="hint"><b>MSCI World:</b> rund 1.400 große und mittlere Unternehmen aus 23 Industrieländern. <b>FTSE Global All Cap:</b> rund 9.000 Unternehmen weltweit, auch Schwellenländer und kleine Firmen, also breiter gestreut. Langfristig lagen beide ungefähr ähnlich; im Rechner bestimmen Rendite und Kosten unten das Ergebnis. Der Index gilt für den freien Sparplan und das Altersvorsorgedepot.</div></div>
+          <div class="field"><div class="row"><label for="r">Marktrendite <span class="idxname">MSCI World</span></label><button type="button" class="info" aria-label="Hinweis zur Rendite"></button><output id="r_o"></output></div>
             <input type="range" id="r" min="0" max="10" step="0.5" value="6">
             <div class="hint">Historisch langfristig etwa <b>7 bis 8 % pro Jahr</b> (nominal, ungefähr), mit einzelnen Jahren um −40 %. Für die Planung realistisch: <b>5 bis 7 %</b>, vorsichtig: 4 %.</div></div>
           <div class="field"><div class="row"><label for="cAvd">Kosten Altersvorsorgedepot</label><button type="button" class="info" aria-label="Hinweis zu Depotkosten"></button><output id="cAvd_o"></output></div>
-            <input type="range" id="cAvd" min="0.1" max="2" step="0.05" value="0.4">
-            <div class="hint">ETF-Depot bei günstigem Broker: <b>0,2 bis 0,5 %</b> im Jahr. Standarddepot: gesetzlich <b>höchstens 1,0 %</b>. Garantieprodukte von Versicherern eher 1 bis 2 %. Die echten Preise stehen erst ab 2027 fest.</div></div>
+            <input type="range" id="cAvd" min="0" max="2" step="0.05" value="0.4">
+            <div class="hint">ETF-Depot bei günstigem Broker: <b>0,2 bis 0,5 %</b> im Jahr. Standarddepot: gesetzlich <b>höchstens 1,0 %</b>. Garantieprodukte von Versicherern eher 1 bis 2 %. <b>0 %</b> nur, wenn Anbieter und Fonds wirklich nichts kosten, etwa bei einer Aktion; die laufenden Kosten des ETF fallen sonst trotzdem an. Die echten Preise stehen erst ab 2027 fest.</div></div>
           <div class="field"><div class="row"><label for="cEtf">Kosten ETF-Sparplan</label><button type="button" class="info" aria-label="Hinweis zu ETF-Kosten"></button><output id="cEtf_o"></output></div>
-            <input type="range" id="cEtf" min="0.05" max="1" step="0.05" value="0.2">
-            <div class="hint">MSCI-World-ETFs kosten meist <b>0,1 bis 0,3 %</b> im Jahr. Sparpläne sind bei vielen Brokern gebührenfrei.</div></div>
+            <input type="range" id="cEtf" min="0" max="1" step="0.05" value="0.2">
+            <div class="hint">MSCI-World-ETFs kosten meist <b>0,1 bis 0,3 %</b> im Jahr, ETFs auf den FTSE Global All Cap oder FTSE All-World etwa <b>0,15 bis 0,25 %</b>. Sparpläne sind bei vielen Brokern gebührenfrei. 0 % ist als Grenzfall wählbar.</div></div>
           <div class="field"><div class="row"><label for="rRie">Riester: Bruttorendite</label><button type="button" class="info" aria-label="Hinweis zur Riester-Rendite"></button><output id="rRie_o"></output></div>
             <input type="range" id="rRie" min="0" max="7" step="0.25" value="2.5">
             <div class="hint">Klassische Riester-Rentenversicherung mit 100-%-Garantie: meist <b>2 bis 3 %</b>. Fondsriester mit Umschichtung eher 3 bis 5 %. Neue Verträge gibt es ab 2027 nicht mehr; der Wert zeigt einen Bestandsvertrag.</div></div>
@@ -323,7 +336,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
           <div class="chartbox" id="chartbox"><svg id="chart" width="100%" role="img" aria-label="Verlauf des Depotwerts der drei Varianten"></svg></div>
           <div class="legend">
             <span style="--c:var(--avd)">Altersvorsorgedepot</span>
-            <span style="--c:var(--etf)">MSCI-World-Sparplan</span>
+            <span style="--c:var(--etf)" class="idxplan">MSCI-World-Sparplan</span>
             <span style="--c:var(--rie)">Riester</span>
           </div>
         </section>
@@ -340,6 +353,15 @@ details.more[open]>summary svg{transform:rotate(180deg)}
           </table></div>
         </section>
         <p class="panel verdict" id="verdict"></p>
+        <section class="panel block exportbox">
+          <h2>Exportieren</h2>
+          <p class="note">Eine A4-Seite mit deinen Annahmen und allen Ergebnissen, zum Speichern oder Teilen.</p>
+          <div class="exprow">
+            <button type="button" class="btn" id="expPdf"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>Als PDF</button>
+            <button type="button" class="btn" id="expPng"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg>Als Bild</button>
+          </div>
+          <p class="note" id="exportMsg" role="status"></p>
+        </section>
       </div>
 
       <div class="pane" data-pane="ausland">
@@ -466,16 +488,19 @@ details.more[open]>summary svg{transform:rotate(180deg)}
     return lo;
   }
 
+  const IDX = { msci:{short:"MSCI World", plan:"MSCI-World-Sparplan"}, ftse:{short:"FTSE Global All Cap", plan:"FTSE-All-Cap-Sparplan"} };
   function read(){
     const p = {};
     ids.forEach(k => {
       const el = $(k); p[k] = parseFloat(el.value); $(k+"_o").textContent = fmt[k](p[k]);
       el.style.setProperty("--p", ((el.value-el.min)/(el.max-el.min)*100) + "%");
     });
-    p.reinv = $("reinv").checked; p.home = $("home").value;
+    p.reinv = $("reinv").checked; p.home = $("home").value; p.idx = $("idx").value in IDX ? $("idx").value : "msci";
+    document.querySelectorAll(".idxname").forEach(e => e.textContent = IDX[p.idx].short);
+    document.querySelectorAll(".idxplan").forEach(e => e.textContent = IDX[p.idx].plan);
     if(p.ret <= p.age) p.ret = p.age + 1;
     $("sum1").textContent = `${p.age} J., ${eur(p.mon)} im Monat`;
-    $("sum2").textContent = `${pct(p.r)} Rendite`;
+    $("sum2").textContent = `${IDX[p.idx].short}, ${pct(p.r)}`;
     $("sum3").textContent = `${p.tNow} % heute, ${p.tOld} % im Alter`;
     $("sum4").textContent = p.abYrs ? `${p.abYrs} J.${p.home==="third"?", Drittstaat":""}` : (p.home==="third" ? "Drittstaat" : "keins");
     return p;
@@ -537,7 +562,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
     const maxG = Math.max(avdGross, s.etfGross, rieGross, 1);
     $("ledger").innerHTML =
       lrow("Altersvorsorgedepot","--avd", s.avdNet, parts(s.a.own, avdFund, s.avdNet, avdGross), avdGross, maxG, s.avdNet - s.etf, s.avdNet===best) +
-      lrow("MSCI-World-Sparplan","--etf", s.etf, parts(s.a.own, 0, s.etf, s.etfGross), s.etfGross, maxG, null, s.etf===best) +
+      lrow(IDX[P.idx].plan,"--etf", s.etf, parts(s.a.own, 0, s.etf, s.etfGross), s.etfGross, maxG, null, s.etf===best) +
       lrow("Riester","--rie", s.rieNet, parts(s.ri.own, rieFund, s.rieNet, rieGross), rieGross, maxG, s.rieNet - s.etf, s.rieNet===best);
     $("mini").innerHTML = [["Depot","--avd",s.avdNet],["ETF","--etf",s.etf],["Riester","--rie",s.rieNet]]
       .map(([n,c,v]) => `<div style="--c:var(${c})"><span>${n}</span><b>${kEur(v)}</b></div>`).join("");
@@ -585,6 +610,184 @@ details.more[open]>summary svg{transform:rotate(180deg)}
   });
   const syncSteps = () => steppers.forEach(([r,m,p]) => { m.disabled = +r.value <= +r.min; p.disabled = +r.value >= +r.max; });
   $("form").addEventListener("input", syncSteps);
+  /* ---------------- Export: A4-Seite als PNG oder PDF ----------------
+     Zeichnet einen Bericht (Annahmen + Ergebnis) in ein Canvas, immer im hellen Design.
+     PDF: jsPDF wird erst beim Klick geladen (cdnjs), das Bild kommt als PNG hinein. */
+  const FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  const COL = {bg:'#ffffff', ink:'#1c1c1e', text:'#3a3a3c', mute:'#6c6c70', line:'#e2e2e7', well:'#f2f2f7', avd:'#0f7a5c', etf:'#3557a8', rie:'#a46a12', warn:'#c0392b'};
+  const mix = (hex, a) => { const n = parseInt(hex.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255;
+    return `rgb(${Math.round(r*a+255*(1-a))},${Math.round(g*a+255*(1-a))},${Math.round(b*a+255*(1-a))})`; };
+
+  function wrap(ctx, text, maxW){
+    const words = text.split(" "), lines = []; let cur = "";
+    words.forEach(w => { const t = cur ? cur+" "+w : w; if(ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else cur = t; });
+    if(cur) lines.push(cur); return lines;
+  }
+  function rrect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function buildReport(){
+    const p = P, s = S;
+    const W = 1240, H = 1754, M = 80, CW = W - 2*M;
+    const c = document.createElement("canvas"); c.width = W*2; c.height = H*2;
+    const ctx = c.getContext("2d"); ctx.scale(2,2);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
+    const font = (sz, wt=400) => ctx.font = `${wt} ${sz}px ${FONT}`;
+    const txt = (t, x, y, sz, wt, color, align="left") => { font(sz,wt); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = "alphabetic"; ctx.fillText(t, x, y); };
+    let y = M;
+
+    // Kopf: Logo + Titel + Datum
+    rrect(ctx, M, y, 64, 64, 15); ctx.fillStyle = COL.avd; ctx.fill();
+    ctx.fillStyle = "#fff"; [[M+15,y+38,9,16],[M+28,y+30,9,24],[M+41,y+20,9,34]].forEach(([x,yy,w,h]) => { rrect(ctx,x,yy,w,h,2); ctx.fill(); });
+    ctx.beginPath(); ctx.arc(M+19.5, y+21, 6, 0, Math.PI*2); ctx.fill();
+    txt("DepotDuell", M+84, y+30, 30, 700, COL.ink);
+    txt("Altersvorsorgedepot, Riester oder " + IDX[p.idx].plan + "?", M+84, y+58, 17, 400, COL.mute);
+    const today = new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
+    txt("Stand " + today, W-M, y+30, 15, 400, COL.mute, "right");
+    txt("mvs2-bot.github.io/DepotDuell", W-M, y+56, 15, 400, COL.mute, "right");
+    y += 100;
+    ctx.fillStyle = COL.line; ctx.fillRect(M, y, CW, 1); y += 46;
+
+    // Ergebnis: drei Zeilen mit Balken
+    txt("Netto mit Rentenbeginn (" + p.ret + " Jahre)", M, y, 22, 700, COL.ink); y += 18;
+    const avdGross = s.avdGross + (p.reinv ? s.side : s.cashRefund), rieGross = s.rieGross + (p.reinv ? s.rside : s.ri.tax);
+    const rows = [
+      ["Altersvorsorgedepot", COL.avd, s.avdNet, parts(s.a.own, s.avdBack?0:s.a.zul+s.a.tax, s.avdNet, avdGross), avdGross],
+      [IDX[p.idx].plan, COL.etf, s.etf, parts(s.a.own, 0, s.etf, s.etfGross), s.etfGross],
+      ["Riester", COL.rie, s.rieNet, parts(s.ri.own, s.rieBack?0:s.ri.zul+s.ri.tax, s.rieNet, rieGross), rieGross],
+    ];
+    const maxG = Math.max(...rows.map(r=>r[4]), 1), best = Math.max(...rows.map(r=>r[2])), months = Math.max(1,(85-p.ret)*12);
+    rows.forEach(([name,color,net,pt,gross]) => {
+      y += 40;
+      txt(name, M, y, 19, 600, color);
+      if(net===best){ font(13,600); const bw = ctx.measureText("Höchster Betrag").width + 20, bx = M + (font(19,600), ctx.measureText(name).width) + 12;
+        rrect(ctx, bx, y-17, bw, 22, 11); ctx.fillStyle = mix(color,.16); ctx.fill(); txt("Höchster Betrag", bx+10, y-1, 13, 600, color); }
+      txt(eur(net), W-M, y+2, 30, 700, COL.ink, "right");
+      y += 36;
+      const bx = M, bw = CW, bh = 18; let x = bx;
+      [[pt.own,color],[pt.fund,mix(color,.58)],[pt.gain,mix(color,.28)]].forEach(([v,cc]) => { const w = v/maxG*bw; ctx.fillStyle = cc; ctx.fillRect(x, y, w, bh); x += w; });
+      const tw = pt.tax/maxG*bw;
+      if(tw>0){ ctx.save(); ctx.beginPath(); ctx.rect(x,y,tw,bh); ctx.clip(); ctx.fillStyle = mix(COL.warn,.12); ctx.fillRect(x,y,tw,bh);
+        ctx.strokeStyle = mix(COL.warn,.55); ctx.lineWidth = 2; for(let k=-bh; k<tw+bh; k+=7){ ctx.beginPath(); ctx.moveTo(x+k,y+bh); ctx.lineTo(x+k+bh,y); ctx.stroke(); } ctx.restore(); }
+      const nx = bx + net/maxG*bw;
+      ctx.fillStyle = COL.ink; ctx.fillRect(nx-1, y-6, 2, bh+12);
+      ctx.beginPath(); ctx.moveTo(nx-6,y-12); ctx.lineTo(nx+6,y-12); ctx.lineTo(nx,y-5); ctx.closePath(); ctx.fill();
+      const flip = nx > W-M-60;
+      txt("Netto", flip ? nx+6 : nx, y-16, 13, 600, COL.ink, flip ? "right" : "center");
+      y += bh + 26;
+      const isEtf = color===COL.etf; const d = isEtf ? "Vergleichsbasis" : (net-s.etf>=0?"+":"−") + eur(Math.abs(net-s.etf)) + " gegenüber ETF";
+      txt(d, M, y, 15, 400, isEtf || net>=s.etf ? COL.mute : COL.warn);
+      txt("≈ " + eur(net/months) + " pro Monat bis 85", W-M, y, 15, 400, COL.mute, "right");
+    });
+    // Legende
+    y += 34; let lx = M;
+    [["Eigene Einzahlungen",COL.ink],["Zulagen und Erstattung",mix(COL.ink,.55)],["Ertrag nach Steuern",mix(COL.ink,.22)],["Steuern und Rückforderung",mix(COL.warn,.4)]].forEach(([l,cc]) => {
+      ctx.fillStyle = cc; ctx.fillRect(lx, y-11, 16, 11); txt(l, lx+24, y, 14, 400, COL.mute); font(14); lx += 24 + ctx.measureText(l).width + 28; });
+    y += 40;
+
+    // Fazit
+    const be = breakEven(p);
+    let fazit = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen. `;
+    if(p.home==="third") fazit += `Mit Wohnsitz im Drittstaat werden beim Altersvorsorgedepot ${eur(s.avdBack)} zurückgefordert. `;
+    if(be===null) fazit += "Das Altersvorsorgedepot liegt bei jedem realistischen Steuersatz im Alter vorn.";
+    else if(be===0) fazit += "Mit diesen Werten ist der freie ETF-Sparplan schon bei 0 % Steuer im Alter besser.";
+    else fazit += `Das Altersvorsorgedepot schlägt den freien Sparplan, solange der Steuersatz auf die Auszahlungen unter ${be.toLocaleString("de-DE",{maximumFractionDigits:1})} % liegt (angenommen: ${p.tOld} %).`;
+    font(16); const fl = wrap(ctx, fazit, CW-40);
+    const fh = 30 + fl.length*24;
+    rrect(ctx, M, y, CW, fh, 14); ctx.fillStyle = COL.well; ctx.fill();
+    fl.forEach((l,i) => txt(l, M+20, y+34+i*24, 16, 400, COL.text));
+    y += fh + 50;
+
+    // Zwei Spalten: Annahmen | Aufschlüsselung
+    const colW = (CW-48)/2, x1 = M, x2 = M + colW + 48; const y0 = y;
+    txt("Annahmen", x1, y, 20, 700, COL.ink);
+    const ann = [
+      ["Alter beim Start 2027", p.age+" Jahre"], ["Rentenbeginn", p.ret+" Jahre"], ["Eigener Beitrag", eur(p.mon)+" im Monat"],
+      ["Kinder mit Kindergeld", p.kids ? p.kids+" für "+p.kidyrs+" Jahre" : "keine"],
+      ["Index", IDX[p.idx].short], ["Marktrendite", pct(p.r)+" p. a."], ["Kosten Altersvorsorgedepot", pct(p.cAvd)], ["Kosten ETF-Sparplan", pct(p.cEtf)],
+      ["Riester: Rendite / Kosten", pct(p.rRie)+" / "+pct(p.cRie)],
+      ["Grenzsteuersatz heute", p.tNow+" %"], ["Steuersatz im Alter", p.tOld+" %"], ["Steuererstattung angelegt", p.reinv?"ja":"nein"],
+      ["Jahre ohne Förderung", p.abYrs ? p.abYrs+" (ab "+p.abFrom+" Jahren)" : "keine"], ["Wohnsitz bei Rentenbeginn", p.home==="third"?"Drittstaat":"DE oder EU/EWR"],
+    ];
+    let ya = y + 16;
+    ann.forEach(([k,v],i) => { ya += 34; if(i%2===0){ ctx.fillStyle = COL.well; ctx.fillRect(x1, ya-23, colW, 34); }
+      txt(k, x1+12, ya, 15, 400, COL.text); txt(v, x1+colW-12, ya, 15, 600, COL.ink, "right"); });
+
+    txt("Aufschlüsselung", x2, y, 20, 700, COL.ink);
+    const cx = [x2 + colW*0.45, x2 + colW*0.68, x2 + colW - 6];
+    let yb = y + 46;
+    [["Depot",COL.avd],["ETF",COL.etf],["Riester",COL.rie]].forEach(([h,cc],i) => txt(h, cx[i], yb, 14, 600, cc, "right"));
+    const sideTax = p.reinv ? s.side - etfNet(s.side, s.a.tax) : 0, rsideTax = p.reinv ? s.rside - etfNet(s.rside, s.rsideB) : 0;
+    const neg = v => v>0.5 ? "−"+eur(v) : "–";
+    const tab = [
+      ["Einzahlungen", eur(s.a.own), eur(s.a.own), eur(s.ri.own)],
+      ["Zulagen", eur(s.a.zul), "–", eur(s.ri.zul)],
+      ["Steuererstattung", eur(s.a.tax), "–", eur(s.ri.tax)],
+      ["Wert mit Rentenbeginn", eur(avdGross), eur(s.etfGross), eur(rieGross)],
+      ["Steuern", neg(s.avdTax+sideTax), neg(s.etfTax), neg(s.rieTax+rsideTax)],
+      ["Rückforderung", neg(s.avdBack), "–", neg(s.rieBack)],
+      ["Netto", eur(s.avdNet), eur(s.etf), eur(s.rieNet)],
+    ];
+    tab.forEach((r,i) => { yb += 38; const last = i===tab.length-1;
+      ctx.fillStyle = COL.line; ctx.fillRect(x2, yb-27, colW, 1);
+      txt(r[0], x2+4, yb, 14, last?700:400, COL.text);
+      [1,2,3].forEach(j => txt(r[j], cx[j-1], yb, 14, last?700:500, COL.ink, "right")); });
+    y = Math.max(ya, yb) + 60;
+
+    // Ausland + Hinweis
+    const aus = p.home==="third"
+      ? `Ausland: Bei Wohnsitz außerhalb von EU/EWR ab Rentenbeginn werden ${eur(s.avdBack)} an Zulagen und Steuervorteilen zurückgefordert (§ 95 EStG).`
+      : p.abYrs ? `Ausland: keine Rückforderung, da der Wohnsitz bei Rentenbeginn in Deutschland oder der EU/EWR liegt. In ${Math.min(p.abYrs, Math.max(0,p.ret-p.abFrom))} Jahren ohne Förderberechtigung fehlen die Zulagen.`
+      : "Ausland: keine Auslandsjahre angenommen.";
+    font(15); wrap(ctx, aus, CW).forEach(l => { txt(l, M, y, 15, 400, COL.text); y += 22; });
+    y += 18;
+    const hin = "Vereinfachtes Modell nach dem Altersvorsorgereformgesetz (BGBl. I 2026 Nr. 156), Stand November 2026: konstante Rendite und Kosten, Beiträge jährlich, ETF-Verkauf auf einmal mit Rentenbeginn (Teilfreistellung 30 %, ohne Vorabpauschale und Kirchensteuer), Kranken- und Pflegeversicherung im Alter nicht berücksichtigt. Keine Steuer- oder Anlageberatung.";
+    font(13); wrap(ctx, hin, CW).forEach(l => { txt(l, M, y, 13, 400, COL.mute); y += 19; });
+
+    // Höhe auf Inhalt kürzen (mindestens A4-Verhältnis bleibt für PDF erhalten)
+    return c;
+  }
+
+  async function deliver(blob, name, type){
+    const file = new File([blob], name, {type});
+    try{
+      if(matchMedia("(pointer:coarse)").matches && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:"DepotDuell"}); return "geteilt";
+      }
+    }catch(e){ if(e && e.name==="AbortError") return "abgebrochen"; }
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); return "gespeichert";
+  }
+  function loadJsPDF(){
+    if(window.jspdf) return Promise.resolve(window.jspdf);
+    return new Promise((res, rej) => { const sc = document.createElement("script");
+      sc.src = "shared/jspdf.umd.min.js";
+      sc.onload = () => res(window.jspdf); sc.onerror = () => rej(new Error("load")); document.head.appendChild(sc); });
+  }
+  const stamp = () => new Date().toISOString().slice(0,10);
+  async function exportAs(kind, btn){
+    const out = $("exportMsg"); out.textContent = ""; btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = "Wird erstellt …";
+    try{
+      const c = buildReport();
+      if(kind==="png"){
+        const blob = await new Promise(r => c.toBlob(r, "image/png"));
+        const how = await deliver(blob, `DepotDuell-${stamp()}.png`, "image/png");
+        if(how!=="abgebrochen") out.textContent = how==="geteilt" ? "Bild geteilt." : "Bild gespeichert.";
+      } else {
+        const { jsPDF } = await loadJsPDF();
+        const pdf = new jsPDF({unit:"mm", format:"a4", orientation:"portrait"});
+        pdf.addImage(c.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+        const how = await deliver(pdf.output("blob"), `DepotDuell-${stamp()}.pdf`, "application/pdf");
+        if(how!=="abgebrochen") out.textContent = how==="geteilt" ? "PDF geteilt." : "PDF gespeichert.";
+      }
+    }catch(e){
+      out.textContent = kind==="pdf" ? "Das PDF ließ sich nicht erstellen. Bitte noch einmal versuchen oder als Bild speichern." : "Das Bild ließ sich nicht erstellen. Bitte noch einmal versuchen.";
+    }finally{ btn.disabled = false; btn.innerHTML = label; }
+  }
+  $("expPng").addEventListener("click", e => exportAs("png", e.currentTarget));
+  $("expPdf").addEventListener("click", e => exportAs("pdf", e.currentTarget));
+  window.__depotReport = buildReport;
+
   // Info-Knöpfe
   document.querySelectorAll(".info").forEach(b => {
     b.innerHTML = INFO; b.setAttribute("aria-expanded","false");
