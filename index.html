@@ -1,1 +1,633 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DepotDuell</title>
+<meta name="description" content="DepotDuell – Altersvorsorgedepot, Riester und MSCI-World-Sparplan nach Steuern vergleichen.">
+<meta name="theme-color" content="#f2f2f7">
+<link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="manifest.json">
 
+<script>
+// Darstellung gilt für alle Seiten (overall-theme), vor dem ersten Rendern setzen. Standard: hell.
+(function () {
+  var t = 'light';
+  try { t = localStorage.getItem('overall-theme') || localStorage.getItem('dash-theme') || 'light'; } catch (e) {}
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+
+<style>
+/* Layout: Werkzeug. Desktop zwei Spalten (Regler | Ergebnis-Bilanz). Handy: angeheftete Mini-Bilanz + drei Reiter statt einer langen Seite. */
+:root{
+  --bg:#f2f2f7; --card:#fff; --surface:var(--card); --well:#f2f2f7; --hover:#e9e9ef; --line:#e2e2e7; --sep:rgba(60,60,67,.14);
+  --ink:#1c1c1e; --text:#3a3a3c; --muted:#6c6c70; --mute:var(--muted); --soft:#f2f2f7;
+  --p1:#0f7a5c; --p1-soft:#dcf0e8; --on-p1:#fff;
+  --avd:var(--p1); --etf:#3557a8; --rie:#a46a12; --warn:#c0392b;
+  --radius:18px; --radius-s:12px; --r:18px;
+  --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.04);
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --f-display:var(--font); --f-body:var(--font); --f-num:var(--font);
+  --hdr:57px; --seg:rgba(118,118,128,.12);
+}
+[data-theme="dark"]{
+  color-scheme:dark; --bg:#000; --card:#1c1c1e; --well:#2c2c2e; --hover:#3a3a3c; --line:#38383a; --sep:rgba(84,84,88,.55);
+  --ink:#f5f5f7; --text:#d1d1d6; --muted:#98989f; --soft:#2c2c2e;
+  --p1:#3cc79a; --p1-soft:#0e2e23; --on-p1:#04140e;
+  --etf:#8aa6f5; --rie:#e3aa55; --warn:#ff7b6b; --shadow:none; --seg:rgba(118,118,128,.24);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;letter-spacing:-.005em;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--p1-soft);color:var(--ink)}
+a{color:var(--etf);text-underline-offset:3px}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--p1);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.wrap{display:flex;flex-direction:column;gap:16px;padding-block:16px calc(48px + env(safe-area-inset-bottom,0px))}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Kopfzeile wie in allen Apps */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.apphdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:saturate(1.8) blur(18px);backdrop-filter:saturate(1.8) blur(18px);border-bottom:1px solid var(--sep)}
+.appbar{display:flex;align-items:center;gap:12px;height:var(--hdr)}
+.logo{width:36px;height:36px;border-radius:9px;flex:none;display:block}
+.head{flex:1;min-width:0}
+.head h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1.15}
+.head .sub{font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{width:36px;height:36px;border:0;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:inline-grid;place-items:center;padding:0;color:var(--ink);flex:none;cursor:pointer}
+.icon-btn:hover{background:var(--hover)}
+
+.intro{display:flex;flex-direction:column;gap:4px}
+.intro h2{font-weight:700;font-size:clamp(22px,3.2vw,30px);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.02em;color:var(--ink)}
+.intro p{margin:0;color:var(--muted);max-width:70ch;font-size:14px}
+
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow)}
+
+/* ---------- Eingaben ---------- */
+form{display:flex;flex-direction:column}
+.formhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.formhead h2{font-size:15px;margin:0;font-weight:600}
+.switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;min-height:44px}
+.switch input{width:16px;height:16px;accent-color:var(--avd)}
+details.group{border-bottom:1px solid var(--line)}
+details.group:last-of-type{border-bottom:0}
+details.group>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;min-height:48px;cursor:pointer}
+details.group>summary::-webkit-details-marker{display:none}
+summary .t{font-weight:600}
+summary .s{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;margin-left:auto}
+summary svg{flex:none;transition:transform .18s cubic-bezier(.2,.7,.2,1);color:var(--muted)}
+details[open]>summary svg{transform:rotate(180deg)}
+.fields{display:flex;flex-direction:column;gap:16px;padding:2px 16px 18px}
+.field{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:6px}
+.row label{font-weight:500;font-size:14.5px}
+.info{flex:none;display:grid;place-items:center;width:32px;height:32px;margin:-6px -4px;border:0;background:none;border-radius:50%;color:var(--muted);cursor:pointer}
+.info:hover{color:var(--ink);background:var(--soft)}
+.info[aria-expanded="true"]{color:var(--avd)}
+.row output{margin-left:auto;font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap;font-weight:500}
+.hint{display:none;font-size:13px;color:var(--muted);line-height:1.5;background:var(--soft);border-radius:6px;padding:8px 10px}
+.hint b{color:var(--ink);font-weight:500}
+.field.open .hint, form.hints .hint{display:block}
+select{width:100%;min-height:44px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.check input{margin-top:3px;width:16px;height:16px;accent-color:var(--avd);flex:none}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--ink) var(--p),var(--line) var(--p))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px color-mix(in srgb,var(--etf) 35%,transparent)}
+
+/* ---------- Ergebnis ---------- */
+.results{display:flex;flex-direction:column;gap:20px;min-width:0}
+.pane{display:flex;flex-direction:column;gap:20px;min-width:0}
+.ledger{padding:18px 18px 14px;display:flex;flex-direction:column;gap:16px}
+.ledger h2,.panel h2{font-family:var(--f-display);font-weight:650;font-size:19px;margin:0;letter-spacing:-.005em}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline}
+.lrow .n{font-weight:600;color:var(--c);font-size:14px;display:flex;align-items:center;gap:8px}
+.lrow .v{font-family:var(--f-display);font-weight:650;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums;text-align:right}
+.lrow .d{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lrow .d .neg{color:var(--warn)}
+.badge{white-space:nowrap;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.bar{grid-column:1/-1;display:flex;height:14px;border-radius:3px;overflow:hidden;background:transparent}
+.bar i{display:block;height:100%;min-width:0;transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.bar .own{background:var(--c)}
+.bar .fund{background:color-mix(in srgb,var(--c) 58%,var(--surface))}
+.bar .gain{background:color-mix(in srgb,var(--c) 28%,var(--surface))}
+.bar .tax{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 45%,var(--surface)) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 35%,transparent)}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);padding-top:2px;border-top:1px solid var(--line);padding-top:12px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:14px;height:10px;border-radius:2px}
+.key .own{background:var(--ink)}
+.key .fund{background:color-mix(in srgb,var(--ink) 55%,var(--surface))}
+.key .gain{background:color-mix(in srgb,var(--ink) 22%,var(--surface))}
+.key .tax{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 45%,var(--surface)) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 35%,transparent)}
+.verdict{margin:0;font-size:14.5px;padding:14px 18px;max-width:none}
+.verdict b{font-weight:600}
+.block{padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.chartbox{width:100%}
+svg text{fill:var(--muted);font-family:var(--f-num);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend span::before{content:"";width:14px;height:3px;border-radius:2px;background:var(--c)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font-size:12.5px;font-weight:600;color:var(--c,var(--muted))}
+td.num{font-family:var(--f-num);font-size:12.5px}
+td small{display:block;color:var(--muted);font-family:var(--f-body);font-size:11px}
+tr.total td{font-weight:600;border-bottom:0}
+.status{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:12px 14px;border-radius:6px;background:var(--soft)}
+.status svg{flex:none;margin-top:2px}
+.status.bad{background:color-mix(in srgb,var(--warn) 12%,var(--surface))}
+.status.bad svg{color:var(--warn)}
+.status.ok svg{color:var(--avd)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.facts div{min-width:0}
+.facts h3{font-size:14px;margin:0 0 3px;font-weight:600}
+.facts p{font-size:13.5px;margin:0;color:var(--muted)}
+.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+details.more>summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center;gap:8px;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more[open]>summary svg{transform:rotate(180deg)}
+
+/* ---------- Handy: Dock + Reiter ---------- */
+.dock{display:none}
+@media (max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .intro p{font-size:13.5px}
+  .dock{display:flex;flex-direction:column;gap:8px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--hdr));z-index:15;background:var(--bg);padding-block:8px;margin-inline:-4px;padding-inline:4px}
+  .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .mini div{background:var(--card);box-shadow:var(--shadow);border-radius:var(--radius-s);padding:6px 8px;min-width:0}
+  .mini span{display:block;font-size:11.5px;font-weight:600;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini b{display:block;font-family:var(--f-display);font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--seg);border-radius:8px;padding:3px;gap:3px}
+  .tabs button{min-height:40px;border:0;border-radius:6px;background:transparent;font-weight:500;font-size:14px;cursor:pointer;color:var(--muted)}
+  .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  body[data-tab="eingaben"] [data-pane]:not([data-pane="eingaben"]),
+  body[data-tab="ergebnis"] [data-pane]:not([data-pane="ergebnis"]),
+  body[data-tab="ausland"] [data-pane]:not([data-pane="ausland"]){display:none}
+  .facts{grid-template-columns:minmax(0,1fr)}
+  .lrow .v{font-size:22px}
+  .ledger{padding:14px}
+  .block{padding:14px}
+  table{font-size:12.5px}
+  th,td{padding:6px 3px}
+  td.num{font-size:11.5px}
+}
+@media (max-width:480px){.lrow .badge{display:none}}
+
+/* Touch: nur der Knopf ist greifbar, die Spur lässt Scrollen durch; dazu Minus/Plus */
+.rangewrap{display:flex;align-items:center;gap:8px}
+.rangewrap input[type=range]{flex:1;min-width:0}
+.step{display:none;flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;place-items:center;padding:0}
+.step:active{background:var(--soft)}
+.step:disabled{opacity:.35;cursor:default}
+@media (pointer:coarse){
+  .step{display:grid}
+  input[type=range]{pointer-events:none;touch-action:pan-y;height:40px}
+  input[type=range]::-webkit-slider-thumb{pointer-events:auto;width:30px;height:30px;margin-top:-12px}
+  input[type=range]::-moz-range-thumb{pointer-events:auto;width:26px;height:26px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="apphdr">
+  <div class="wrap appbar">
+    <img class="logo" src="icon.svg" alt="">
+    <div class="head">
+      <h1>DepotDuell</h1>
+      <div class="sub">Altersvorsorgedepot, Riester oder ETF?</div>
+    </div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Hell oder dunkel" title="Hell / Dunkel"></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <h2>Altersvorsorgedepot, Riester oder freier MSCI-World-Sparplan?</h2>
+    <p>Was bleibt mit Rentenbeginn nach Steuern übrig? Regeln nach dem Altersvorsorgereformgesetz (Start 1.1.2027), Stand November 2026. Vereinfachtes Modell, keine Steuerberatung.</p>
+  </div>
+
+  <div class="dock" aria-label="Kurzergebnis und Bereiche">
+    <div class="mini" id="mini"></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-go="eingaben" aria-selected="true">Eingaben</button>
+      <button type="button" role="tab" data-go="ergebnis" aria-selected="false">Ergebnis</button>
+      <button type="button" role="tab" data-go="ausland" aria-selected="false">Ausland</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <form class="panel" id="form" autocomplete="off" data-pane="eingaben">
+      <div class="formhead">
+        <h2>Deine Annahmen</h2>
+        <label class="switch"><input type="checkbox" id="allhints">Alle Hinweise</label>
+      </div>
+
+      <details class="group" open>
+        <summary><span class="t">Du und dein Beitrag</span><span class="s" id="sum1"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="fields">
+          <div class="field"><div class="row"><label for="age">Alter beim Start 2027</label><button type="button" class="info" aria-label="Hinweis zum Alter"></button><output id="age_o"></output></div>
+            <input type="range" id="age" min="18" max="60" step="1" value="30">
+            <div class="hint">Unter 25 gibt es einmalig <b>200 € Berufseinsteigerbonus</b>. Je früher du startest, desto mehr Jahre Zinseszins.</div></div>
+          <div class="field"><div class="row"><label for="ret">Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Rentenbeginn"></button><output id="ret_o"></output></div>
+            <input type="range" id="ret" min="65" max="70" step="1" value="65">
+            <div class="hint">Die Auszahlung beginnt <b>frühestens mit 65, spätestens mit 70</b>.</div></div>
+          <div class="field"><div class="row"><label for="mon">Eigener Beitrag pro Monat</label><button type="button" class="info" aria-label="Hinweis zum Beitrag"></button><output id="mon_o"></output></div>
+            <input type="range" id="mon" min="10" max="570" step="5" value="150">
+            <div class="hint"><b>150 € im Monat</b> holen die volle Zulage von 540 € im Jahr. Am meisten Förderung pro Euro gibt es auf die ersten <b>30 €</b> (50 %). Darüber bis 150 € gibt es 25 %, alles über 150 € ist ungefördert. Möglich sind 10 bis 570 € im Monat.</div></div>
+          <div class="field"><div class="row"><label for="kids">Kinder mit Kindergeld</label><button type="button" class="info" aria-label="Hinweis zu Kindern"></button><output id="kids_o"></output></div>
+            <input type="range" id="kids" min="0" max="4" step="1" value="0">
+            <div class="hint">Pro Kind bis zu <b>300 € Kinderzulage</b> im Jahr, schon ab 25 € Eigenbeitrag im Monat. Gilt nur, solange Kindergeld fließt.</div></div>
+          <div class="field"><div class="row"><label for="kidyrs">Jahre mit Kinderzulage</label><button type="button" class="info" aria-label="Hinweis zur Dauer der Kinderzulage"></button><output id="kidyrs_o"></output></div>
+            <input type="range" id="kidyrs" min="0" max="25" step="1" value="18">
+            <div class="hint">Typisch <b>18 bis 25 Jahre</b> je Kind: Kindergeld bis 18, in Ausbildung bis 25. Vereinfacht ab dem ersten Sparjahr gerechnet.</div></div>
+        </div>
+      </details>
+
+      <details class="group">
+        <summary><span class="t">Rendite und Kosten</span><span class="s" id="sum2"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="fields">
+          <div class="field"><div class="row"><label for="r">Marktrendite MSCI World</label><button type="button" class="info" aria-label="Hinweis zur Rendite"></button><output id="r_o"></output></div>
+            <input type="range" id="r" min="0" max="10" step="0.5" value="6">
+            <div class="hint">Historisch langfristig etwa <b>7 bis 8 % pro Jahr</b> (nominal, ungefähr), mit einzelnen Jahren um −40 %. Für die Planung realistisch: <b>5 bis 7 %</b>, vorsichtig: 4 %.</div></div>
+          <div class="field"><div class="row"><label for="cAvd">Kosten Altersvorsorgedepot</label><button type="button" class="info" aria-label="Hinweis zu Depotkosten"></button><output id="cAvd_o"></output></div>
+            <input type="range" id="cAvd" min="0.1" max="2" step="0.05" value="0.4">
+            <div class="hint">ETF-Depot bei günstigem Broker: <b>0,2 bis 0,5 %</b> im Jahr. Standarddepot: gesetzlich <b>höchstens 1,0 %</b>. Garantieprodukte von Versicherern eher 1 bis 2 %. Die echten Preise stehen erst ab 2027 fest.</div></div>
+          <div class="field"><div class="row"><label for="cEtf">Kosten ETF-Sparplan</label><button type="button" class="info" aria-label="Hinweis zu ETF-Kosten"></button><output id="cEtf_o"></output></div>
+            <input type="range" id="cEtf" min="0.05" max="1" step="0.05" value="0.2">
+            <div class="hint">MSCI-World-ETFs kosten meist <b>0,1 bis 0,3 %</b> im Jahr. Sparpläne sind bei vielen Brokern gebührenfrei.</div></div>
+          <div class="field"><div class="row"><label for="rRie">Riester: Bruttorendite</label><button type="button" class="info" aria-label="Hinweis zur Riester-Rendite"></button><output id="rRie_o"></output></div>
+            <input type="range" id="rRie" min="0" max="7" step="0.25" value="2.5">
+            <div class="hint">Klassische Riester-Rentenversicherung mit 100-%-Garantie: meist <b>2 bis 3 %</b>. Fondsriester mit Umschichtung eher 3 bis 5 %. Neue Verträge gibt es ab 2027 nicht mehr; der Wert zeigt einen Bestandsvertrag.</div></div>
+          <div class="field"><div class="row"><label for="cRie">Riester: Kosten</label><button type="button" class="info" aria-label="Hinweis zu Riester-Kosten"></button><output id="cRie_o"></output></div>
+            <input type="range" id="cRie" min="0.3" max="3" step="0.1" value="1.5">
+            <div class="hint">Riester-Rentenversicherungen lagen laut Verbraucherzentrale im Mittel bei rund <b>1,5 bis 1,7 %</b> Effektivkosten, teure bei 2,5 bis 3 %. Fondssparpläne ab etwa 0,7 %.</div></div>
+        </div>
+      </details>
+
+      <details class="group">
+        <summary><span class="t">Steuern</span><span class="s" id="sum3"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="fields">
+          <div class="field"><div class="row"><label for="tNow">Grenzsteuersatz heute</label><button type="button" class="info" aria-label="Hinweis zum Steuersatz heute"></button><output id="tNow_o"></output></div>
+            <input type="range" id="tNow" min="0" max="45" step="1" value="30">
+            <div class="hint">Ist dein Steuervorteil aus dem Sonderausgabenabzug höher als die Zulage, erstattet das Finanzamt die Differenz. Grob, ledig: ca. <b>30 %</b> bei 40.000 € zu versteuerndem Einkommen, ca. <b>38 %</b> bei 60.000 €, <b>42 %</b> ab etwa 70.000 €.</div></div>
+          <div class="field"><div class="row"><label for="tOld">Steuersatz auf Auszahlungen</label><button type="button" class="info" aria-label="Hinweis zum Steuersatz im Alter"></button><output id="tOld_o"></output></div>
+            <input type="range" id="tOld" min="0" max="45" step="1" value="20">
+            <div class="hint"><b>Der wichtigste Regler.</b> Die Auszahlungen kommen auf deine gesetzliche Rente obendrauf, entscheidend ist also dein Grenzsteuersatz im Alter. Für Durchschnittsverdiener meist <b>15 bis 25 %</b>, mit hoher Rente, Mieteinnahmen oder Betriebsrente auch 30 % und mehr.</div></div>
+          <label class="check"><input type="checkbox" id="reinv" checked><span>Steuererstattung in einen ETF-Sparplan anlegen. Ohne Häkchen zählt sie nur als Summe, ohne Rendite.</span></label>
+        </div>
+      </details>
+
+      <details class="group">
+        <summary><span class="t">Ausland</span><span class="s" id="sum4"></span><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="fields">
+          <div class="field"><div class="row"><label for="abYrs">Jahre ohne Förderung</label><button type="button" class="info" aria-label="Hinweis zu Auslandsjahren"></button><output id="abYrs_o"></output></div>
+            <input type="range" id="abYrs" min="0" max="40" step="1" value="0">
+            <div class="hint">Zum Beispiel Arbeit in Österreich bei einem dortigen Arbeitgeber. In diesen Jahren gibt es <b>keine Zulagen und keine Steuererstattung</b>; du zahlst ungefördert weiter. Bei einer Entsendung durch einen deutschen Arbeitgeber bleibt die Förderung meist bestehen.</div></div>
+          <div class="field"><div class="row"><label for="abFrom">Umzug mit Alter</label><output id="abFrom_o"></output></div>
+            <input type="range" id="abFrom" min="18" max="69" step="1" value="40"></div>
+          <div class="field"><div class="row"><label for="home">Wohnsitz bei Rentenbeginn</label><button type="button" class="info" aria-label="Hinweis zum Wohnsitz"></button></div>
+            <select id="home">
+              <option value="eu">Deutschland oder EU/EWR (z. B. Österreich)</option>
+              <option value="third">Drittstaat (z. B. Schweiz, UK, USA)</option>
+            </select>
+            <div class="hint">Wer <b>ab Rentenbeginn außerhalb von EU/EWR</b> wohnt, muss Zulagen und Steuervorteile zurückzahlen (§ 95 EStG). Die Schweiz gehört nicht zum EWR.</div></div>
+        </div>
+      </details>
+    </form>
+
+    <div class="results">
+      <div class="pane" data-pane="ergebnis">
+        <section class="panel ledger" aria-live="polite">
+          <h2>Netto mit Rentenbeginn</h2>
+          <div id="ledger" style="display:flex;flex-direction:column;gap:16px"></div>
+          <div class="key"><span><i class="own"></i>Eigene Einzahlungen</span><span><i class="fund"></i>Zulagen und Erstattung</span><span><i class="gain"></i>Ertrag nach Steuern</span><span><i class="tax"></i>Steuern und Rückforderung</span></div>
+        </section>
+        <p class="panel verdict" id="verdict"></p>
+        <section class="panel block">
+          <h2>Depotwert vor Steuern</h2>
+          <div class="chartbox" id="chartbox"><svg id="chart" width="100%" role="img" aria-label="Verlauf des Depotwerts der drei Varianten"></svg></div>
+          <div class="legend">
+            <span style="--c:var(--avd)">Altersvorsorgedepot</span>
+            <span style="--c:var(--etf)">MSCI-World-Sparplan</span>
+            <span style="--c:var(--rie)">Riester</span>
+          </div>
+        </section>
+        <section class="panel block">
+          <h2>Aufschlüsselung</h2>
+          <div class="tablewrap"><table>
+            <thead><tr><th></th><th style="--c:var(--avd)">Depot</th><th style="--c:var(--etf)">ETF</th><th style="--c:var(--rie)">Riester</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table></div>
+        </section>
+      </div>
+
+      <div class="pane" data-pane="ausland">
+        <section class="panel block">
+          <h2>Umzug ins Ausland</h2>
+          <div class="status" id="abStatus"></div>
+          <div class="facts">
+            <div><h3>Wer ist förderberechtigt?</h3><p>Pflichtversicherte in der <b>deutschen</b> Rentenversicherung, deutsche Beamte und ab 2027 Selbstständige unter 67 mit deutschen Einkünften aus Gewerbe oder freiem Beruf. Ehepartner Förderberechtigter erhalten eine kleinere Zulage (max. 175 €).</p></div>
+            <div><h3>Arbeiten in Österreich</h3><p>Wohnst und arbeitest du dort, zahlst du in die österreichische Pensionsversicherung ein und verlierst die Zulage. Ausnahmen: Entsendung durch den deutschen Arbeitgeber oder Grenzgänger mit Wohnsitz in Deutschland. Zurückzahlen musst du nichts.</p></div>
+            <div><h3>Wann wird zurückgefordert?</h3><p>Nur wenn du ab Beginn der Auszahlung außerhalb von EU und EWR wohnst. Wer vorher zurückkommt oder in ein EU-Land zieht, behält alles.</p></div>
+            <div><h3>Noch offen</h3><p>Ob Anbieter Kunden mit Auslandswohnsitz weiterführen und wie das Zielland die Auszahlung besteuert. Vor einem Umzug bei der Zulagenstelle (ZfA) nachfragen.</p></div>
+          </div>
+        </section>
+        <section class="panel block">
+          <details class="more">
+            <summary>Annahmen des Modells<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <ul class="notes">
+              <li>Beiträge jährlich zu Jahresbeginn, Rendite und Kosten konstant. Einzahlungen ab 2027 bis zum Jahr vor Rentenbeginn.</li>
+              <li>Altersvorsorgedepot: Grundzulage 50 % bis 360 €, 25 % bis 1.800 €; Kinderzulage bis 300 € je Kind. Geförderter Teil im Alter voll mit dem eingestellten Satz besteuert. Beiträge über 1.800 €: halber Gewinn steuerpflichtig.</li>
+              <li>ETF-Sparplan: Verkauf auf einmal mit Rentenbeginn, 26,375 % auf 70 % des Gewinns, einmal 1.000 € Sparerpauschbetrag. Vorabpauschale und Kirchensteuer nicht berücksichtigt. Wer über Jahre verkauft, zahlt etwas weniger.</li>
+              <li>Riester: Grundzulage 175 €, Kinderzulage 300 €, Mindesteigenbeitrag als erfüllt angenommen, Abzug bis 2.100 €. Garantie: mindestens Beiträge plus Zulagen.</li>
+              <li>Rückforderung bei Drittstaat-Wohnsitz: alle Zulagen und Steuererstattungen, ohne Zinsen.</li>
+              <li>Kranken- und Pflegeversicherung im Alter nicht eingerechnet. Pflichtversicherte Rentner zahlen auf diese Auszahlungen normalerweise keine Beiträge, freiwillig Versicherte schon.</li>
+            </ul>
+          </details>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const ids = ["age","ret","mon","kids","kidyrs","r","cAvd","cEtf","rRie","cRie","tNow","tOld","abYrs","abFrom"];
+  const eur = v => Math.round(v).toLocaleString("de-DE") + " €";
+  const kEur = v => (Math.abs(v)>=100000 ? Math.round(v/1000).toLocaleString("de-DE") : (v/1000).toLocaleString("de-DE",{maximumFractionDigits:1})) + " Tsd. €";
+  const pct = v => v.toLocaleString("de-DE",{maximumFractionDigits:2}) + " %";
+  const fmt = {age:v=>v+" Jahre",ret:v=>v+" Jahre",mon:v=>eur(v),kids:v=>String(v),kidyrs:v=>v+" Jahre",r:pct,cAvd:pct,cEtf:pct,rRie:pct,cRie:pct,tNow:v=>v+" %",tOld:v=>v+" %",abYrs:v=>v+" Jahre",abFrom:v=>v+" Jahre"};
+  const INFO = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 8v4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="5.6" r="1" fill="currentColor"/></svg>';
+  const ICON_OK = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.8 9.2l2.2 2.2 4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICON_BAD = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2.2l7.2 12.6H1.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7v3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="12.8" r="1" fill="currentColor"/></svg>';
+
+  function etfNet(V,basis){
+    const gain = Math.max(0, V-basis);
+    return V - Math.max(0, gain*0.7 - 1000)*0.26375;
+  }
+
+  function simulate(p, tOldOverride){
+    const tOld = (tOldOverride ?? p.tOld)/100, tNow = p.tNow/100;
+    const N = Math.max(1, p.ret - p.age);
+    const gA = 1 + (p.r - p.cAvd)/100, gE = 1 + (p.r - p.cEtf)/100, gR = 1 + (p.rRie - p.cRie)/100;
+    let S=0,U=0,Ub=0, side=0, sideB=0, cashRefund=0;
+    let V=0, Vb=0;
+    let R=0, Ru=0, Rub=0, Rguar=0, rside=0, rsideB=0;
+    const a = {own:0,zul:0,tax:0}, ri = {own:0,zul:0,tax:0};
+    const series = [];
+    for(let y=0;y<N;y++){
+      const age = p.age + y;
+      const abroad = p.abYrs>0 && age>=p.abFrom && age < p.abFrom + p.abYrs;
+      const own = Math.min(p.mon*12, 6840);
+      const kidsActive = y < p.kidyrs ? p.kids : 0;
+      // Altersvorsorgedepot
+      let sub=0, zul=0, tb=0;
+      if(!abroad && own>=120){
+        sub = Math.min(own,1800);
+        const grund = 0.5*Math.min(sub,360) + 0.25*Math.max(0,sub-360);
+        const kind = kidsActive*Math.min(own,300);
+        const bonus = (y===0 && p.age<25) ? 200 : 0;
+        zul = grund+kind+bonus;
+        tb = Math.max(0,(sub+grund+kind)*tNow - (grund+kind));
+      }
+      const unsub = own - sub;
+      S = (S + sub + zul)*gA; U = (U + unsub)*gA; Ub += unsub;
+      if(p.reinv){ side = (side + tb)*gE; sideB += tb; } else { cashRefund += tb; }
+      a.own += own; a.zul += zul; a.tax += tb;
+      // ETF
+      V = (V + own)*gE; Vb += own;
+      // Riester
+      let rz=0, rtb=0, rsub=0;
+      if(!abroad){
+        rz = 175 + kidsActive*300 + ((y===0 && p.age<25)?200:0);
+        rsub = Math.max(0, Math.min(own, 2100 - rz));
+        rtb = Math.max(0,(rsub+rz)*tNow - rz);
+      }
+      const runsub = own - rsub;
+      R = (R + rsub + rz)*gR; Rguar += rsub + rz;
+      Ru = (Ru + runsub)*gR; Rub += runsub;
+      if(p.reinv){ rside = (rside + rtb)*gE; rsideB += rtb; }
+      ri.own += own; ri.zul += rz; ri.tax += rtb;
+      series.push({age:age+1, avd:S+U+side, etf:V, rie:Math.max(R,0)+Ru+rside});
+    }
+    R = Math.max(R, Rguar);
+    if(series.length) series[series.length-1].rie = R + Ru + rside;
+    const third = p.home === "third";
+    // Netto AVD
+    let avdNet = S*(1-tOld) + U - 0.5*Math.max(0,U-Ub)*tOld + (p.reinv ? etfNet(side,sideB) : cashRefund);
+    let avdBack = third ? a.zul + a.tax : 0;
+    avdNet -= avdBack;
+    const etf = etfNet(V,Vb);
+    let rieNet = R*(1-tOld) + Ru - 0.5*Math.max(0,Ru-Rub)*tOld + (p.reinv ? etfNet(rside,rsideB) : ri.tax);
+    let rieBack = third ? ri.zul + ri.tax : 0;
+    rieNet -= rieBack;
+    return {N, series, a, ri, avdGross:S+U, side, rside, rsideB, cashRefund, avdNet, avdBack, etfGross:V, etf, etfTax:V-etf, rieGross:R+Ru, rieNet, rieBack,
+            avdTax: S*tOld + 0.5*Math.max(0,U-Ub)*tOld, rieTax: R*tOld + 0.5*Math.max(0,Ru-Rub)*tOld};
+  }
+
+  function breakEven(p){
+    const f = t => simulate(p,t).avdNet - simulate(p,t).etf;
+    if(f(0) < 0) return 0;
+    if(f(60) > 0) return null;
+    let lo=0, hi=60;
+    for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(f(m)>0) lo=m; else hi=m; }
+    return lo;
+  }
+
+
+  function breakEven(p){
+    const f = t => { const s = simulate(p,t); return s.avdNet - s.etf; };
+    if(f(0) < 0) return 0;
+    if(f(60) > 0) return null;
+    let lo=0, hi=60;
+    for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(f(m)>0) lo=m; else hi=m; }
+    return lo;
+  }
+
+  function read(){
+    const p = {};
+    ids.forEach(k => {
+      const el = $(k); p[k] = parseFloat(el.value); $(k+"_o").textContent = fmt[k](p[k]);
+      el.style.setProperty("--p", ((el.value-el.min)/(el.max-el.min)*100) + "%");
+    });
+    p.reinv = $("reinv").checked; p.home = $("home").value;
+    if(p.ret <= p.age) p.ret = p.age + 1;
+    $("sum1").textContent = `${p.age} J., ${eur(p.mon)} im Monat`;
+    $("sum2").textContent = `${pct(p.r)} Rendite`;
+    $("sum3").textContent = `${p.tNow} % heute, ${p.tOld} % im Alter`;
+    $("sum4").textContent = p.abYrs ? `${p.abYrs} J.${p.home==="third"?", Drittstaat":""}` : (p.home==="third" ? "Drittstaat" : "keins");
+    return p;
+  }
+
+  function lrow(name, color, net, parts, gross, maxGross, delta, best){
+    const w = v => (Math.max(0,v)/maxGross*100).toFixed(2) + "%";
+    const deltaHtml = delta===null ? "Vergleichsbasis" : `<span class="${delta<0?'neg':''}">${delta>=0?'+':'−'}${eur(Math.abs(delta))} gegenüber ETF</span>`;
+    return `<div class="lrow" style="--c:var(${color})">
+      <span class="n">${name}${best?'<span class="badge">Höchster Betrag</span>':''}</span>
+      <span class="v">${eur(net)}</span>
+      <div class="bar" role="img" aria-label="${name}: ${eur(parts.own)} eigene Einzahlungen, ${eur(parts.fund)} Förderung, ${eur(parts.gain)} Ertrag, ${eur(parts.tax)} Steuern und Rückforderung">
+        <i class="own" style="width:${w(parts.own)}"></i><i class="fund" style="width:${w(parts.fund)}"></i><i class="gain" style="width:${w(parts.gain)}"></i><i class="tax" style="width:${w(parts.tax)}"></i>
+      </div>
+      <div class="d"><span>${deltaHtml}</span><span>≈ ${eur(net/Math.max(1,(85-P.ret)*12))} pro Monat bis 85</span></div>
+    </div>`;
+  }
+  function parts(own, fund, net, gross){
+    let o = own, f = fund, g = net - own - fund;
+    if(g < 0){ f = Math.max(0, f + g); g = 0; if(own+f > net){ o = Math.max(0, net - f); } }
+    return {own:o, fund:f, gain:g, tax:Math.max(0, gross - net)};
+  }
+
+  function niceStep(raw){
+    const p = Math.pow(10, Math.floor(Math.log10(raw))); const n = raw/p;
+    return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p;
+  }
+  function drawChart(series){
+    const svg = $("chart"), W = Math.max(280, Math.round($("chartbox").clientWidth || 640));
+    const H = W < 500 ? 210 : 280, L = 68, Rm = 10, T = 12, B = 28;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+    const max = Math.max(1, ...series.map(s=>Math.max(s.avd,s.etf,s.rie)));
+    const step = niceStep(max/4), top = Math.ceil(max/step)*step;
+    const x0 = series[0].age-1, x1 = series[series.length-1].age;
+    const X = a => L + (a-x0)/(x1-x0||1)*(W-L-Rm);
+    const Y = v => T + (1 - v/top)*(H-T-B);
+    let g = "";
+    for(let v=0; v<=top+1e-6; v+=step){
+      g += `<line x1="${L}" x2="${W-Rm}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+      g += `<text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${v? Math.round(v/1000).toLocaleString("de-DE")+" Tsd.":"0"}</text>`;
+    }
+    const span = x1-x0, ts = span>24 ? 10 : 5;
+    for(let a=Math.ceil(x0/ts)*ts; a<=x1; a+=ts) g += `<text x="${X(a)}" y="${H-8}" text-anchor="middle">${a} J.</text>`;
+    const pts = key => [`${X(x0)},${Y(0)}`].concat(series.map(s=>`${X(s.age)},${Y(s[key])}`)).join(" ");
+    const line = (key,c,w) => `<polyline points="${pts(key)}" fill="none" stroke="var(${c})" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const last = series[series.length-1];
+    const dot = (key,c) => `<circle cx="${X(last.age)}" cy="${Y(last[key])}" r="4" fill="var(${c})" stroke="var(--surface)" stroke-width="2"/>`;
+    svg.innerHTML = g + `<polygon points="${pts("avd")} ${X(x1)},${Y(0)}" fill="var(--avd)" opacity=".09"/>` +
+      line("rie","--rie",2) + line("etf","--etf",2.25) + line("avd","--avd",2.75) + dot("rie","--rie") + dot("etf","--etf") + dot("avd","--avd");
+  }
+
+  let P, S;
+  function render(){
+    P = read(); const s = S = simulate(P);
+    const best = Math.max(s.avdNet, s.etf, s.rieNet);
+    const avdGross = s.avdGross + (P.reinv ? s.side : s.cashRefund);
+    const rieGross = s.rieGross + (P.reinv ? s.rside : s.ri.tax);
+    const avdFund = s.avdBack ? 0 : s.a.zul + s.a.tax, rieFund = s.rieBack ? 0 : s.ri.zul + s.ri.tax;
+    const maxG = Math.max(avdGross, s.etfGross, rieGross, 1);
+    $("ledger").innerHTML =
+      lrow("Altersvorsorgedepot","--avd", s.avdNet, parts(s.a.own, avdFund, s.avdNet, avdGross), avdGross, maxG, s.avdNet - s.etf, s.avdNet===best) +
+      lrow("MSCI-World-Sparplan","--etf", s.etf, parts(s.a.own, 0, s.etf, s.etfGross), s.etfGross, maxG, null, s.etf===best) +
+      lrow("Riester","--rie", s.rieNet, parts(s.ri.own, rieFund, s.rieNet, rieGross), rieGross, maxG, s.rieNet - s.etf, s.rieNet===best);
+    $("mini").innerHTML = [["Depot","--avd",s.avdNet],["ETF","--etf",s.etf],["Riester","--rie",s.rieNet]]
+      .map(([n,c,v]) => `<div style="--c:var(${c})"><span>${n}</span><b>${kEur(v)}</b></div>`).join("");
+    const be = breakEven(P);
+    let v = `Nach ${s.N} Jahren mit ${eur(s.a.own)} eigenen Einzahlungen. `;
+    if(P.home==="third") v += `<b>Mit Wohnsitz im Drittstaat werden beim Altersvorsorgedepot ${eur(s.avdBack)} zurückgefordert.</b> `;
+    if(be===null) v += `Das Altersvorsorgedepot liegt bei jedem realistischen Steuersatz im Alter vorn.`;
+    else if(be===0) v += `Mit diesen Werten ist der freie ETF-Sparplan schon bei 0 % Steuer im Alter besser.`;
+    else v += `Das Altersvorsorgedepot schlägt den freien Sparplan, solange dein Steuersatz auf die Auszahlungen unter <b>${be.toLocaleString("de-DE",{maximumFractionDigits:1})} %</b> liegt (eingestellt: ${P.tOld} %).`;
+    $("verdict").innerHTML = v;
+    drawChart(s.series);
+    const row = (label, a, e, r, cls="") => `<tr class="${cls}"><td>${label}</td><td class="num">${a}</td><td class="num">${e}</td><td class="num">${r}</td></tr>`;
+    const neg = x => x>0.5 ? "−"+eur(x) : "–";
+    const sideTax = P.reinv ? s.side - etfNet(s.side, s.a.tax) : 0, rsideTax = P.reinv ? s.rside - etfNet(s.rside, s.rsideB) : 0;
+    $("tbody").innerHTML =
+      row("Eigene Einzahlungen", eur(s.a.own), eur(s.a.own), eur(s.ri.own)) +
+      row("Zulagen", eur(s.a.zul), "–", eur(s.ri.zul)) +
+      row("Steuererstattung", eur(s.a.tax), "–", eur(s.ri.tax)) +
+      row("Wert mit Rentenbeginn", eur(avdGross), eur(s.etfGross), eur(rieGross)) +
+      row("Steuern", neg(s.avdTax + sideTax), neg(s.etfTax), neg(s.rieTax + rsideTax)) +
+      row("Rückforderung", neg(s.avdBack), "–", neg(s.rieBack)) +
+      row("Netto", eur(s.avdNet), eur(s.etf), eur(s.rieNet), "total");
+    const st = $("abStatus");
+    const fehl = Math.min(P.abYrs, Math.max(0, P.ret - P.abFrom));
+    if(P.home==="third"){ st.className="status bad"; st.innerHTML = ICON_BAD + `<span><b>Rückforderung:</b> Mit Wohnsitz außerhalb von EU/EWR bei Rentenbeginn gehen beim Altersvorsorgedepot ${eur(s.avdBack)} an Zulagen und Steuervorteilen zurück. Ausgezahlt wird das Depot trotzdem.</span>`; }
+    else if(P.abYrs>0){ st.className="status ok"; st.innerHTML = ICON_OK + `<span><b>Keine Rückforderung</b>, weil du bei Rentenbeginn in Deutschland oder der EU/EWR wohnst. In ${fehl} Jahren ohne Förderberechtigung fehlen aber die Zulagen; die Einzahlungen laufen ungefördert weiter.</span>`; }
+    else { st.className="status ok"; st.innerHTML = ICON_OK + `<span><b>Keine Auslandsjahre eingestellt.</b> Unter „Eingaben“ im Bereich „Ausland“ kannst du ausprobieren, was ein Umzug kostet.</span>`; }
+  }
+
+
+  // Minus/Plus neben jedem Regler
+  const MINUS='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const PLUS='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M8 3.5v9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const steppers = [];
+  document.querySelectorAll('input[type=range]').forEach(r => {
+    const w = document.createElement('div'); w.className = 'rangewrap';
+    r.parentNode.insertBefore(w, r);
+    const lab = (document.querySelector(`label[for="${r.id}"]`)||{}).textContent || '';
+    const mk = (dir, icon) => { const b = document.createElement('button'); b.type='button'; b.className='step'; b.innerHTML=icon;
+      b.setAttribute('aria-label', (dir<0?'Weniger: ':'Mehr: ') + lab);
+      b.addEventListener('click', () => { dir<0 ? r.stepDown() : r.stepUp(); r.dispatchEvent(new Event('input',{bubbles:true})); });
+      return b; };
+    const minus = mk(-1, MINUS), plus = mk(1, PLUS);
+    w.append(minus, r, plus); steppers.push([r, minus, plus]);
+  });
+  const syncSteps = () => steppers.forEach(([r,m,p]) => { m.disabled = +r.value <= +r.min; p.disabled = +r.value >= +r.max; });
+  $("form").addEventListener("input", syncSteps);
+  // Info-Knöpfe
+  document.querySelectorAll(".info").forEach(b => {
+    b.innerHTML = INFO; b.setAttribute("aria-expanded","false");
+    b.addEventListener("click", () => { const f = b.closest(".field"); const o = f.classList.toggle("open"); b.setAttribute("aria-expanded", String(o)); });
+  });
+  const mobile = window.matchMedia("(max-width: 900px)");
+  const allh = $("allhints");
+  allh.checked = !mobile.matches;
+  const syncHints = () => $("form").classList.toggle("hints", allh.checked);
+  allh.addEventListener("change", syncHints); syncHints();
+  if(!mobile.matches) document.querySelectorAll("details.group").forEach(d => d.open = true);
+
+  // Reiter (Handy)
+  const setTab = t => {
+    document.body.dataset.tab = t;
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.go===t)));
+    if(t==="ergebnis") drawChart(S.series);
+    try{ localStorage.setItem("vorsorge-tab", t); }catch(e){}
+  };
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { setTab(b.dataset.go); window.scrollTo({top:0}); }));
+  let startTab = "eingaben"; try{ startTab = localStorage.getItem("vorsorge-tab") || "eingaben"; }catch(e){}
+
+  $("form").addEventListener("input", render);
+  $("form").addEventListener("submit", e => e.preventDefault());
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => drawChart(S.series), 120); });
+  render(); syncSteps(); setTab(startTab);
+
+  // Hell/Dunkel: gemeinsam mit Dashboard und allen Apps (overall-theme)
+  const MOON = '<svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  const SUN = '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>';
+  function applyTheme(t, save){
+    document.documentElement.setAttribute("data-theme", t);
+    $("themeBtn").innerHTML = t==="dark" ? SUN : MOON;
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", t==="dark" ? "#000000" : "#f2f2f7");
+    if(save){ try{ localStorage.setItem("overall-theme", t); }catch(e){} }
+    if(S) drawChart(S.series);
+  }
+  $("themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark", true);
+  applyTheme(document.documentElement.getAttribute("data-theme")==="dark" ? "dark" : "light", false);
+  window.addEventListener("storage", e => { if(e.key==="overall-theme" && e.newValue) applyTheme(e.newValue, false); });
+
+  // Service Worker: offline nutzbar
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+})();
+</script>
+
+<script src="shared/ios-nav.js" defer></script>
+</body>
+</html>
