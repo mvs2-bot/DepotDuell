@@ -119,7 +119,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px color
 .lrow .d{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .lrow .d .neg{color:var(--warn)}
 .badge{white-space:nowrap;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
-.bar{grid-column:1/-1;display:flex;height:14px;border-radius:3px;overflow:hidden;background:transparent}
+.barwrap{grid-column:1/-1;position:relative;margin-top:26px}
+.netmark{position:absolute;top:-5px;bottom:-5px;width:0;border-left:2px solid var(--ink);margin-left:-1px;pointer-events:none}
+.netmark::before{content:"";position:absolute;left:-6px;top:-6px;border:5px solid transparent;border-top:6px solid var(--ink);border-bottom:0}
+.netmark b{position:absolute;bottom:calc(100% + 6px);left:-1px;font-size:12px;font-weight:600;line-height:1.2;color:var(--ink);white-space:nowrap;transform:translateX(-50%)}
+.netmark.flip b{transform:translateX(-100%) translateX(6px)}
+.bar{display:flex;height:14px;border-radius:3px;overflow:hidden;background:transparent}
 .bar i{display:block;height:100%;min-width:0;transition:width .35s cubic-bezier(.2,.7,.2,1)}
 .bar .own{background:var(--c)}
 .bar .fund{background:color-mix(in srgb,var(--c) 58%,var(--surface))}
@@ -313,12 +318,6 @@ details.more[open]>summary svg{transform:rotate(180deg)}
 
     <div class="results">
       <div class="pane" data-pane="ergebnis">
-        <section class="panel ledger" aria-live="polite">
-          <h2>Netto mit Rentenbeginn</h2>
-          <div id="ledger" style="display:flex;flex-direction:column;gap:16px"></div>
-          <div class="key"><span><i class="own"></i>Eigene Einzahlungen</span><span><i class="fund"></i>Zulagen und Erstattung</span><span><i class="gain"></i>Ertrag nach Steuern</span><span><i class="tax"></i>Steuern und Rückforderung</span></div>
-        </section>
-        <p class="panel verdict" id="verdict"></p>
         <section class="panel block">
           <h2>Depotwert vor Steuern</h2>
           <div class="chartbox" id="chartbox"><svg id="chart" width="100%" role="img" aria-label="Verlauf des Depotwerts der drei Varianten"></svg></div>
@@ -328,6 +327,11 @@ details.more[open]>summary svg{transform:rotate(180deg)}
             <span style="--c:var(--rie)">Riester</span>
           </div>
         </section>
+        <section class="panel ledger" aria-live="polite">
+          <h2>Netto mit Rentenbeginn</h2>
+          <div id="ledger" style="display:flex;flex-direction:column;gap:16px"></div>
+          <div class="key"><span><i class="own"></i>Eigene Einzahlungen</span><span><i class="fund"></i>Zulagen und Erstattung</span><span><i class="gain"></i>Ertrag nach Steuern</span><span><i class="tax"></i>Steuern und Rückforderung</span></div>
+        </section>
         <section class="panel block">
           <h2>Aufschlüsselung</h2>
           <div class="tablewrap"><table>
@@ -335,6 +339,7 @@ details.more[open]>summary svg{transform:rotate(180deg)}
             <tbody id="tbody"></tbody>
           </table></div>
         </section>
+        <p class="panel verdict" id="verdict"></p>
       </div>
 
       <div class="pane" data-pane="ausland">
@@ -482,9 +487,9 @@ details.more[open]>summary svg{transform:rotate(180deg)}
     return `<div class="lrow" style="--c:var(${color})">
       <span class="n">${name}${best?'<span class="badge">Höchster Betrag</span>':''}</span>
       <span class="v">${eur(net)}</span>
-      <div class="bar" role="img" aria-label="${name}: ${eur(parts.own)} eigene Einzahlungen, ${eur(parts.fund)} Förderung, ${eur(parts.gain)} Ertrag, ${eur(parts.tax)} Steuern und Rückforderung">
+      <div class="barwrap"><div class="bar" role="img" aria-label="${name}: ${eur(parts.own)} eigene Einzahlungen, ${eur(parts.fund)} Förderung, ${eur(parts.gain)} Ertrag, ${eur(parts.tax)} Steuern und Rückforderung">
         <i class="own" style="width:${w(parts.own)}"></i><i class="fund" style="width:${w(parts.fund)}"></i><i class="gain" style="width:${w(parts.gain)}"></i><i class="tax" style="width:${w(parts.tax)}"></i>
-      </div>
+      </div><span class="netmark${net/maxGross>0.9?' flip':''}" style="left:${w(net)}" aria-hidden="true"><b>Netto</b></span></div>
       <div class="d"><span>${deltaHtml}</span><span>≈ ${eur(net/Math.max(1,(85-P.ret)*12))} pro Monat bis 85</span></div>
     </div>`;
   }
